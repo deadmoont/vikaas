@@ -30,11 +30,22 @@ const testConfig = {
   },
 
   // ---- Step 1: Instructions ---------------------------------------------
+  // Each item is either a plain string, or an array of "segments" to mix
+  // plain text with inline links: strings render as text, and
+  // { text, href } objects render as a real, styled <a>.
   instructions: [
     "This is a timed test. Please make sure you are not interrupted during the test, as the timer cannot be paused once started.",
     "Please ensure you have a stable internet connection.",
-    "We recommend you to try the sample test for a couple of minutes, before taking the main test.",
-    "Before taking the test, please go through the FAQs to resolve your queries related to the test or the platform.",
+    [
+      "We recommend you to try the ",
+      { text: "sample test", href: "#" },
+      " for a couple of minutes, before taking the main test.",
+    ],
+    [
+      "Before taking the test, please go through the ",
+      { text: "FAQs", href: "#" },
+      " to resolve your queries related to the test or the platform.",
+    ],
   ],
 
   sampleTestNote: "Try a sample test to get familiar with the format and environment",
@@ -47,13 +58,8 @@ const testConfig = {
   ],
 
   // ---- Step 2: Candidate details form ------------------------------------
-  workExperienceOptions: [
-    "Fresher / No experience",
-    "0 - 1 years",
-    "1 - 3 years",
-    "3 - 5 years",
-    "5+ years",
-  ],
+  // Years of experience, matching the reference platform's own labels.
+  workExperienceOptions: ["< 1", "1", "2", "3", "4", "5", "> 5"],
 
   integrityAgreementText:
     "I agree not to copy code from any source, including colleagues, and will refrain from accessing websites or AI tools for assistance. I further agree not to copy or share any content or questions from this assessment with any other medium or forum.",

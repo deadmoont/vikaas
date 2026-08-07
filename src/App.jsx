@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import testConfig from "./config/testConfig.js";
 import Sidebar from "./components/Sidebar.jsx";
 import StepDots from "./components/StepDots.jsx";
@@ -21,20 +21,35 @@ const initialFormData = {
 
 export default function App() {
   const [stepIndex, setStepIndex] = useState(0);
+  // Tracks which way we just navigated so the incoming step's slide
+  // direction matches: Continue slides in from the right, Back from the left.
+  const [direction, setDirection] = useState(1);
   const [formData, setFormData] = useState(initialFormData);
   const [theme, setTheme] = useState("dark");
   const [showCompletion, setShowCompletion] = useState(false);
+  const scrollRef = useRef(null);
 
   // Lifted up (rather than living inside PermissionsPage) so the page-level
   // footer's "Start Test" button can read their status too.
   const camera = useCamera();
   const fullscreen = useFullscreen();
 
-  const goTo = (index) => setStepIndex(Math.max(0, Math.min(STEPS.length - 1, index)));
+  const goTo = (index) => {
+    const clamped = Math.max(0, Math.min(STEPS.length - 1, index));
+    setDirection(clamped >= stepIndex ? 1 : -1);
+    setStepIndex(clamped);
+  };
+
+  // Each step change should land scrolled to the top, not wherever the
+  // previous step's scroll position happened to be.
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, 0);
+  }, [stepIndex]);
 
   const restartDemo = () => {
     setShowCompletion(false);
     setFormData(initialFormData);
+    setDirection(-1);
     setStepIndex(0);
     if (document.fullscreenElement && document.exitFullscreen) {
       document.exitFullscreen().catch(() => {});
@@ -53,14 +68,21 @@ export default function App() {
 
         <div className="content-column">
           <main className="panel">
-            <div className="panel-scroll">
-              {STEPS[stepIndex] === "instructions" && <InstructionsPage />}
-              {STEPS[stepIndex] === "details" && (
-                <DetailsFormPage formData={formData} setFormData={setFormData} />
-              )}
-              {STEPS[stepIndex] === "permissions" && (
-                <PermissionsPage camera={camera} fullscreen={fullscreen} />
-              )}
+            <div className="panel-scroll" ref={scrollRef}>
+              {/* key={stepIndex} forces a remount on every step change, which
+                  restarts the CSS slide-in animation from scratch each time. */}
+              <div
+                key={stepIndex}
+                className={direction === 1 ? "step-slide-right" : "step-slide-left"}
+              >
+                {STEPS[stepIndex] === "instructions" && <InstructionsPage />}
+                {STEPS[stepIndex] === "details" && (
+                  <DetailsFormPage formData={formData} setFormData={setFormData} />
+                )}
+                {STEPS[stepIndex] === "permissions" && (
+                  <PermissionsPage camera={camera} fullscreen={fullscreen} />
+                )}
+              </div>
             </div>
           </main>
 

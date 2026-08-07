@@ -57,7 +57,7 @@ a {
   --text-body: #b3b3b3;
   --text-label: #979797;
   --text-row: #f0f0f0;
-  --text-link: #879dff;
+  --text-link: #5b8dff;
   --text-footer-link: #6687ff;
   --text-muted: #6e6e6e;
 
@@ -125,15 +125,16 @@ body {
 }
 
 .theme-toggle {
+  /* Aligned with the card's actual right edge (app-shell padding-right 40px
+     + content-column's margin-right 80px) so it sits directly above the
+     card's top-right corner instead of floating in the margin beside it. */
   position: fixed;
-  top: 28px;
-  right: 36px;
+  top: 26px;
+  right: 120px;
   z-index: 50;
   background: transparent;
   border: none;
-  padding: 6px;
-  font-size: 20px;
-  line-height: 1;
+  padding: 4px;
   color: #cccccc;
   display: flex;
   align-items: center;
@@ -142,13 +143,13 @@ body {
 
 .app-shell {
   display: grid;
-  grid-template-columns: minmax(300px, 1fr) minmax(420px, 1.4fr);
+  grid-template-columns: minmax(280px, 1fr) minmax(440px, 1.7fr);
   gap: 36px;
   width: 100%;
   max-width: 1680px;
   height: 100vh;
   margin: 0 auto;
-  padding: 68px 56px 36px;
+  padding: 60px 40px 32px;
   align-items: stretch;
 }
 
@@ -174,12 +175,19 @@ body {
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
-  padding: 32px 28px;
+  /* No bottom padding: content-column (the card + footer nav) has none
+     either, so both columns' last line sit flush with the same grid-row
+     bottom edge — the footer links end level with the Continue button. */
+  padding: 32px 12px 0;
+  /* Shifts the whole left column (title/duration/footer) 15px left as one
+     unit, without touching the grid track itself — so the card's position
+     (an independent grid item) is entirely unaffected. */
+  margin-left: -15px;
 }
 
 .sidebar-title {
   color: var(--text-heading);
-  font-size: 44px;
+  font-size: 40px;
   line-height: 1.15;
   font-weight: 700;
   margin: 0;
@@ -207,8 +215,14 @@ body {
   gap: 8px;
   margin-bottom: 6px;
   color: #e6e6e6;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
+}
+
+.clock-icon {
+  display: inline-flex;
+  color: #e6e6e6;
+  flex-shrink: 0;
 }
 
 .duration-card-text {
@@ -256,10 +270,6 @@ body {
 .sidebar-links a {
   color: var(--text-footer-link);
   font-weight: 400;
-  text-decoration: none;
-}
-
-.sidebar-links a:hover {
   text-decoration: underline;
 }
 
@@ -269,6 +279,10 @@ body {
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  /* Card was stretching almost to the viewport edge (~2-3% gap). Margin
+     here (not a grid/track change) shrinks the card from the right only —
+     left edge and top position are untouched. ~2.5x the prior gap. */
+  margin-right: 80px;
 }
 
 .panel {
@@ -285,8 +299,31 @@ body {
 
 .panel-scroll {
   overflow-y: auto;
-  padding: 40px 52px;
+  padding: 32px 40px;
   flex: 1;
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #4d4d4d transparent;
+}
+
+.panel-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.panel-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panel-scroll::-webkit-scrollbar-thumb {
+  background-color: #4d4d4d;
+  border-radius: 8px;
+}
+
+.panel-scroll::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
 }
 
 /* Sits BELOW the card, outside its border — mirrors the reference design
@@ -310,9 +347,44 @@ body {
   gap: 14px;
 }
 
+/* ============================================================================
+   STEP TRANSITIONS
+   The incoming step slides in toward its resting place — from the right on
+   Continue, from the left on Back — rather than just popping into view.
+   ============================================================================ */
+@keyframes step-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(36px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes step-slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-36px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.step-slide-right {
+  animation: step-slide-in-right 0.32s ease both;
+}
+
+.step-slide-left {
+  animation: step-slide-in-left 0.32s ease both;
+}
+
 .panel-heading {
   color: var(--text-heading);
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
   margin: 18px 0 4px;
 }
@@ -363,7 +435,7 @@ body {
    ============================================================================ */
 .instructions-list {
   color: var(--text-body);
-  font-size: 15.5px;
+  font-size: 14.5px;
   font-weight: 400;
   line-height: 1.6;
   padding-left: 20px;
@@ -386,10 +458,11 @@ body {
   background: var(--surface-1);
   border: 1px solid var(--border-callout);
   border-radius: 12px;
-  padding: 22px 28px;
+  padding: 18px 22px;
   margin-top: 8px;
   color: #e6e6e6;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 400;
 }
 
 .sample-card span {
@@ -445,6 +518,13 @@ body {
 /* ============================================================================
    FORM ELEMENTS
    ============================================================================ */
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 600px;
+}
+
 .field-label {
   font-size: 0.85rem;
   color: var(--text-label);
@@ -455,8 +535,7 @@ body {
   color: var(--danger);
 }
 
-.text-input,
-.select-input {
+.text-input {
   background: var(--surface-table);
   border: 1px solid var(--border-btn-outline);
   border-radius: 10px;
@@ -470,10 +549,73 @@ body {
   color: var(--text-muted);
 }
 
-.text-input:focus,
-.select-input:focus {
+.text-input:focus {
   outline: 2px solid var(--accent-green);
   outline-offset: 1px;
+}
+
+/* ---- Dropdown (custom-styled stand-in for <select>) ---- */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface-table);
+  border: 1px solid var(--border-btn-outline);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--text-heading);
+  font-size: 0.95rem;
+  text-align: left;
+}
+
+.dropdown-trigger:focus {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 1px;
+}
+
+.dropdown-trigger .accordion-chevron {
+  color: #cccccc;
+  flex-shrink: 0;
+}
+
+.dropdown-placeholder {
+  color: var(--text-muted);
+}
+
+.dropdown-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-callout);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.dropdown-option {
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: var(--text-row);
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.dropdown-option:hover,
+.dropdown-option--selected {
+  background: var(--border-callout);
 }
 
 .checkbox-card {
@@ -632,9 +774,12 @@ body {
 }
 
 .btn-secondary {
+  /* Only the Sample Test button uses this class — sized down independently
+     of .btn's base 16px so Continue/Start Test etc. are untouched. */
   background: var(--surface-1);
   color: var(--text-heading);
   border-color: var(--border-btn-outline);
+  font-size: 14px;
 }
 
 .btn-outline {

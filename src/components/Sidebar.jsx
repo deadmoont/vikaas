@@ -10,7 +10,14 @@ export default function Sidebar() {
       <div className="sidebar-footer">
         <div className="duration-card">
           <div className="duration-card-row">
-            <span className="clock-icon" aria-hidden="true">🕐</span>
+            <span className="clock-icon" aria-hidden="true">
+              {/* Raw emoji glyphs ignore CSS `color` and render in their own
+                  fixed tone — same issue the theme-toggle icon had. */}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <polyline points="12 7 12 12 15.5 13.5" />
+              </svg>
+            </span>
             <strong>Test duration: {durationMinutes} minutes</strong>
           </div>
           <p className="duration-card-text">

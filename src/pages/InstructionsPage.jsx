@@ -1,5 +1,6 @@
 import { useState } from "react";
 import testConfig from "../config/testConfig.js";
+import Chevron from "../components/Chevron.jsx";
 
 // Nav buttons (Continue) live in the page-level footer (see App.jsx) —
 // this component only renders the instructions content.
@@ -14,7 +15,19 @@ export default function InstructionsPage() {
 
       <ol className="instructions-list">
         {instructions.map((line, i) => (
-          <li key={i}>{line}</li>
+          <li key={i}>
+            {Array.isArray(line)
+              ? line.map((segment, j) =>
+                  typeof segment === "string" ? (
+                    <span key={j}>{segment}</span>
+                  ) : (
+                    <a key={j} href={segment.href} onClick={(e) => e.preventDefault()}>
+                      {segment.text}
+                    </a>
+                  )
+                )
+              : line}
+          </li>
         ))}
       </ol>
 
@@ -38,7 +51,7 @@ export default function InstructionsPage() {
       <div className="collapsible">
         <button className="collapsible-header" onClick={() => setSectionsOpen((o) => !o)}>
           <span>Section Details</span>
-          <span className={`accordion-chevron ${sectionsOpen ? "accordion-chevron--open" : ""}`}>⌃</span>
+          <Chevron open={sectionsOpen} />
         </button>
         {sectionsOpen && (
           <table className="sections-table">

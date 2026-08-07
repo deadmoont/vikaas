@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Chevron from "./Chevron.jsx";
 
 export default function AccordionItem({ icon, title, status, defaultOpen = false, children }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -11,7 +12,7 @@ export default function AccordionItem({ icon, title, status, defaultOpen = false
           {title}
           {status === "done" && <span className="status-check" aria-label="Completed">✓</span>}
         </span>
-        <span className={`accordion-chevron ${open ? "accordion-chevron--open" : ""}`}>⌄</span>
+        <Chevron open={open} />
       </button>
       {open && <div className="accordion-body">{children}</div>}
     </div>
