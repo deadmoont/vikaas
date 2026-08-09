@@ -6,9 +6,11 @@ import ThemeToggle from "./components/ThemeToggle.jsx";
 import SetupPage from "./pages/SetupPage.jsx";
 import InstructionsPage from "./pages/InstructionsPage.jsx";
 import DetailsFormPage from "./pages/DetailsFormPage.jsx";
-import PermissionsPage, { CompletionModal } from "./pages/PermissionsPage.jsx";
+import PermissionsPage from "./pages/PermissionsPage.jsx";
 import PhotoCapturePage from "./pages/PhotoCapturePage.jsx";
 import TestDashboardPage from "./pages/TestDashboardPage.jsx";
+import SolvePage from "./pages/SolvePage.jsx";
+import FeedbackPage from "./pages/FeedbackPage.jsx";
 import useCamera from "./hooks/useCamera.js";
 import useFullscreen from "./hooks/useFullscreen.js";
 import { isDetailsFormValid } from "./utils/validators.js";
@@ -28,9 +30,14 @@ export default function App() {
   // step per page load: once submitted there's no in-app way back to it,
   // and the only way to redo it is a real browser refresh (which remounts
   // this component from scratch and resets setupFields to null again).
-  // stage flow: setup -> onboarding (3 steps) -> photoCapture -> testDashboard
+  // stage flow: setup -> onboarding (3 steps) -> testDashboard (<-> solve).
+  // Photo capture is NOT its own stage — it's an overlay rendered on top of
+  // testDashboard (see showPhotoCapture below), matching the reference,
+  // where the dashboard is already loaded and visible-but-blurred behind
+  // the capture prompt rather than a blank page shown before it.
   const [setupFields, setSetupFields] = useState(null);
   const [stage, setStage] = useState("setup");
+  const [showPhotoCapture, setShowPhotoCapture] = useState(false);
 
   const [stepIndex, setStepIndex] = useState(0);
   // Tracks which way we just navigated so the incoming step's slide
@@ -38,7 +45,15 @@ export default function App() {
   const [direction, setDirection] = useState(1);
   const [formData, setFormData] = useState(initialFormData);
   const [theme, setTheme] = useState("dark");
-  const [showCompletion, setShowCompletion] = useState(false);
+  // Fixed once, when the actual test starts — both TestDashboardPage and
+  // SolvePage derive the same live countdown from this instead of each
+  // running their own independent (and driftable) timer.
+  const [testStartTime, setTestStartTime] = useState(null);
+  const [activeQuestionId, setActiveQuestionId] = useState(null);
+  // Question ids the candidate has hit "Save & Proceed" on at least once —
+  // drives "Solve" -> "Modify" on the dashboard and the checkmark badge on
+  // SolvePage's rail. Not persisted; resets with the rest of the demo.
+  const [submittedQuestions, setSubmittedQuestions] = useState(() => new Set());
   const scrollRef = useRef(null);
 
   // Lifted up (rather than living inside PermissionsPage) so the page-level
@@ -71,34 +86,23 @@ export default function App() {
     scrollRef.current?.scrollTo(0, 0);
   }, [stepIndex]);
 
-  const restartDemo = () => {
-    setShowCompletion(false);
-    setFormData(initialFormData);
-    setDirection(-1);
-    setStepIndex(0);
-    setStage("onboarding");
-    if (document.fullscreenElement && document.exitFullscreen) {
-      document.exitFullscreen().catch(() => {});
-    }
-  };
+  const markQuestionSubmitted = (id) =>
+    setSubmittedQuestions((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
 
   const canContinueDetails = isDetailsFormValid(formData);
   const canStartTest = camera.status === "granted" && fullscreen.isFullscreen;
 
+  const handleToggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+
   if (stage === "setup") {
     return (
       <div className={`app app--${theme}`} data-theme={theme}>
-        <ThemeToggle theme={theme} onToggle={() => setTheme((t) => (t === "dark" ? "light" : "dark"))} />
+        <ThemeToggle theme={theme} onToggle={handleToggleTheme} />
         <SetupPage onComplete={handleSetupComplete} />
-      </div>
-    );
-  }
-
-  if (stage === "photoCapture") {
-    return (
-      <div className={`app app--${theme}`} data-theme={theme}>
-        <ThemeToggle theme={theme} onToggle={() => setTheme((t) => (t === "dark" ? "light" : "dark"))} />
-        <PhotoCapturePage camera={camera} onComplete={() => setStage("testDashboard")} />
       </div>
     );
   }
@@ -106,16 +110,64 @@ export default function App() {
   if (stage === "testDashboard") {
     return (
       <div className={`app app--${theme}`} data-theme={theme}>
-        <ThemeToggle theme={theme} onToggle={() => setTheme((t) => (t === "dark" ? "light" : "dark"))} />
-        <TestDashboardPage config={config} onSubmit={() => setShowCompletion(true)} />
-        {showCompletion && <CompletionModal config={config} onClose={restartDemo} />}
+        {/* No standalone ThemeToggle here — TestDashboardPage renders it
+            inline as part of its own fixed action-button group instead. */}
+        <TestDashboardPage
+          config={config}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
+          onSubmit={() => setStage("feedback")}
+          onSolve={(id) => {
+            setActiveQuestionId(id);
+            setStage("solve");
+          }}
+          testStartTime={testStartTime}
+          submittedQuestions={submittedQuestions}
+        />
+        {/* Overlaid on top of the dashboard above (blurred backdrop), not a
+            separate page shown before it — see the stage-flow note above. */}
+        {showPhotoCapture && (
+          <PhotoCapturePage camera={camera} onComplete={() => setShowPhotoCapture(false)} />
+        )}
+      </div>
+    );
+  }
+
+  if (stage === "solve") {
+    return (
+      <div className={`app app--${theme}`} data-theme={theme}>
+        <SolvePage
+          key={activeQuestionId}
+          questionId={activeQuestionId}
+          sections={config.sections}
+          onSelectQuestion={setActiveQuestionId}
+          onBack={() => setStage("testDashboard")}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
+          testStartTime={testStartTime}
+          durationMinutes={config.durationMinutes}
+          submittedQuestions={submittedQuestions}
+          onSubmitQuestion={markQuestionSubmitted}
+        />
+      </div>
+    );
+  }
+
+  if (stage === "feedback") {
+    // The true terminal screen — no restart affordance here, matching the
+    // reference and this app's "refresh to start over" philosophy used
+    // everywhere else (see the Setup-page notes above).
+    return (
+      <div className={`app app--${theme}`} data-theme={theme}>
+        <ThemeToggle theme={theme} onToggle={handleToggleTheme} />
+        <FeedbackPage config={config} />
       </div>
     );
   }
 
   return (
     <div className={`app app--${theme}`} data-theme={theme}>
-      <ThemeToggle theme={theme} onToggle={() => setTheme((t) => (t === "dark" ? "light" : "dark"))} />
+      <ThemeToggle theme={theme} onToggle={handleToggleTheme} />
 
       <div className="app-shell">
         <Sidebar config={config} />
@@ -166,7 +218,14 @@ export default function App() {
                 <button
                   className="btn btn-primary"
                   disabled={!canStartTest}
-                  onClick={() => setStage("photoCapture")}
+                  onClick={() => {
+                    // Timer starts now — the dashboard (and its live
+                    // countdown) is visible immediately, just blurred behind
+                    // the capture overlay, not gated behind a blank page.
+                    setTestStartTime(Date.now());
+                    setShowPhotoCapture(true);
+                    setStage("testDashboard");
+                  }}
                 >
                   {config.startTestLabel}
                 </button>

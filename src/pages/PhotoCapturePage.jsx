@@ -3,9 +3,12 @@ import { useEffect, useRef, useState } from "react";
 const CAPTURE_COUNTDOWN = 20; // seconds before auto-capture
 const SUBMIT_COUNTDOWN = 3; // seconds the "Looking good" review screen holds before advancing
 
-// Runs right after "Start Test": a live-camera identity-verification step
-// that auto-captures a photo after a countdown (or on manual click), then
-// briefly "submits" it before handing off to the test dashboard.
+// Renders as a blurred overlay ON TOP OF the already-loaded TestDashboardPage
+// (see App.jsx) — not a separate page before it — matching the reference,
+// where the dashboard is visible-but-blurred behind the capture prompt.
+// A live-camera identity-verification step that auto-captures a photo after
+// a countdown (or on manual click), then briefly "submits" it before
+// dismissing itself to reveal the dashboard underneath.
 export default function PhotoCapturePage({ camera, onComplete }) {
   const videoRef = useRef(null);
   const [phase, setPhase] = useState("capturing"); // capturing | reviewing
@@ -66,7 +69,7 @@ export default function PhotoCapturePage({ camera, onComplete }) {
   }, [phase, submitSecondsLeft, onComplete]);
 
   return (
-    <div className="setup-page">
+    <div className="modal-overlay">
       <div className="photo-capture-card">
         <div className="photo-capture-frame">
           {phase === "capturing" ? (

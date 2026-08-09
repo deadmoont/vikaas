@@ -111,9 +111,18 @@ const testConfig = {
   backLabel: "Back",
   continueLabel: "Continue",
 
-  completionTitle: "You're all set! \u{1F389}",
-  completionMessage:
-    "This is a frontend-only demo, so the actual coding environment isn't wired up. In a real deployment, the test would launch here.",
+  // "Submit Test" (Test Dashboard) confirmation dialog.
+  confirmSubmitTitle: "Confirm Submit Test",
+  confirmSubmitMessage:
+    "Once your test is submitted, you will no longer be able to view or modify any part of it. Are you sure you want to submit your test?",
+  confirmSubmitNoLabel: "No, resume test",
+  confirmSubmitYesLabel: "Yes, submit my test",
+
+  // Final screen shown after confirming submission.
+  submittedTitle: "Your assessment has been submitted!",
+  submittedMessage:
+    "HackerRank has received your assessment. If you have any questions or need support, please reply to the invitation email you received.",
+  feedbackPrompt: "Let us know your feedback",
 };
 
 export default testConfig;

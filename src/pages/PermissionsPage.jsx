@@ -242,12 +242,3 @@ export default function PermissionsPage({ config, camera, fullscreen }) {
     </div>
   );
 }
-
-export function CompletionModal({ config, onClose }) {
-  const { completionTitle, completionMessage } = config;
-  return (
-    <Modal title={completionTitle} onClose={onClose} footer={<button className="btn btn-primary" onClick={onClose}>Close</button>}>
-      <p className="muted-text">{completionMessage}</p>
-    </Modal>
-  );
-}

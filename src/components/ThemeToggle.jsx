@@ -1,7 +1,12 @@
-export default function ThemeToggle({ theme, onToggle }) {
+// `className` defaults to the fixed-position top-right placement used on
+// every onboarding page. Pass "theme-toggle theme-toggle--inline" to flow it
+// as a normal element inside another fixed group instead (see
+// TestDashboardPage, which needs it alongside its own action buttons rather
+// than independently fixed).
+export default function ThemeToggle({ theme, onToggle, className = "theme-toggle" }) {
   return (
     <button
-      className="theme-toggle"
+      className={className}
       onClick={onToggle}
       aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
       title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}

@@ -6,9 +6,9 @@ Guidance for Claude Code (or any agent) working in this repository.
 
 A **frontend-only** clone of a HackerRank-style test flow: **Setup → Instructions →
 Candidate Details → Integrity Guidelines & Permissions → Identity Verification → Test
-Dashboard**. No backend, no database, no auth — everything runs client-side, and the
-Setup page's output is **in-memory React state only, never persisted** (no localStorage).
-Built with React + Vite.
+Dashboard → Solve (problem + code editor)**. No backend, no database, no auth —
+everything runs client-side, and the Setup page's output is **in-memory React state
+only, never persisted** (no localStorage). Built with React + Vite.
 
 The Setup page is a config generator, not test content itself: it collects company name,
 test duration, date/start time (end time = start + duration, computed live), and a
@@ -22,24 +22,63 @@ get a blank Setup page again is a real browser refresh (which remounts `App` and
 `setupFields` to `null`). Don't add an "edit setup" affordance back in unless explicitly
 asked; it was removed on purpose, not an oversight.
 
-"Start Test" leads to a real (but still frontend-only) two-step handoff, not straight to a
-completion modal:
+"Start Test" leads to a real (but still frontend-only) handoff, not straight to a
+completion screen:
 
-1. **`PhotoCapturePage`** — a live-camera identity-verification screen. Auto-captures a
-   frame to a `<canvas>` after a 20s countdown (or on manual "Capture photo" click), shows
-   a 3s "Looking good! / Submitting Image..." review screen with a Retake option, then
-   advances automatically.
+1. **`TestDashboardPage`** loads immediately (`testStartTime` is captured, and the stage
+   becomes `"testDashboard"`, right on the Start Test click) — **`PhotoCapturePage` then
+   renders as a blurred overlay on top of it** (`showPhotoCapture` state in `App.jsx`),
+   not as its own preceding stage/page. This matches the reference: the dashboard (and its
+   live countdown) is already visible-but-blurred behind the capture prompt, not hidden
+   behind a blank page. It auto-captures a frame to a `<canvas>` after a 20s countdown (or
+   on manual "Capture photo" click), shows a 3s "Looking good! / Submitting Image..."
+   review screen with a Retake option, then dismisses itself (`showPhotoCapture -> false`)
+   to reveal the already-loaded dashboard underneath. If you ever need this gate to block
+   the dashboard from loading at all, that's a deliberate step backward from the current
+   design — confirm it's actually wanted first.
 2. **`TestDashboardPage`** — lists `config.sections` as a table per section (Question /
-   Type / Action), with a "Solve" button per question. **There is no real coding
-   environment behind it** — no questions, no code editor, no submission logic — this
-   stays a UI/UX demo, not a testing platform. "Solve" just shows a brief inline demo note.
-   "Submit Test" here is what shows the completion modal now (not the Permissions page's
-   "Start Test" anymore).
+   Type / Action), with a "Solve" button per question that reads "Modify" instead once
+   that question id is in `submittedQuestions` (a `Set` lifted to `App.jsx`, populated by
+   `SolvePage`'s "Save & Proceed" via `onSubmitQuestion`). "Submit Test" no longer jumps
+   straight to a completion modal — it opens a **"Confirm Submit Test" dialog** first (own
+   local state in `TestDashboardPage`, using the shared `Modal` component); only its "Yes,
+   submit my test" button calls the `onSubmit` prop, which moves `App.jsx` to the
+   `"feedback"` stage.
+3. **`SolvePage`** — a real problem-statement + code-editor split screen, reached via
+   "Solve"/"Modify". **Only questionIds 1/2/3 (global numbering across sections) have real
+   content** — `src/data/problems.jsx` hardcodes exactly 3 problems (Easy/Medium/Hard:
+   Bit Profit, Global Maximum, Autocorrect Prototype), matched by that global number.
+   Anything beyond question 3 falls back to `TestDashboardPage`'s inline demo note instead
+   of opening `SolvePage`. `CodeEditor.jsx` has real (if lightweight) syntax coloring —
+   `utils/highlightCpp.jsx` is a regex tokenizer, not a real parser, rendered as a colored
+   `<pre>` stacked exactly under a transparent-text `<textarea>` (the classic
+   textarea-over-highlight-overlay technique); still not a dependency like
+   CodeMirror/Monaco, deliberately. "Run Code" simulates a run rather than executing
+   anything: `runStatus` (`idle` → `running` → `passed`) drives a 5–7s randomized timer,
+   during which every one of `TOTAL_TEST_CASES` (15) shows a loading spinner; only the
+   first N (that problem's real `sampleCases.length`) are ever "unlocked" — the rest show
+   a lock icon throughout, mirroring hidden judge cases. On `passed`, the results panel
+   becomes a list (left) + detail (right) view — Compiler Message/Input/Output/Expected
+   Output — but only for unlocked cases; selecting a locked one shows an explanatory note
+   instead of fabricating input/output that was never real. The test countdown
+   (`useCountdown`) is derived from a single `testStartTime` timestamp captured once in
+   `App.jsx` on the Start Test click, not a per-page ticking counter, so the remaining time
+   stays exactly consistent across dashboard ⇄ solve navigation (and through the photo
+   capture overlay) instead of drifting or resetting.
+4. **`FeedbackPage`** — the true terminal screen ("Your assessment has been submitted!" +
+   a 5-star rating), reached only via the confirm dialog's "Yes, submit my test". Sits on
+   the same `.setup-page` wrapper as `SetupPage`/`PhotoCapturePage` (no background
+   override there, so the usual gradient glow shows through) — deliberately different from
+   `TestDashboardPage`/`SolvePage`, which are flat with no glow. **No restart affordance
+   here on purpose** — matches the reference, and this app's established "refresh the
+   browser to start over" philosophy (see the Setup notes above). Don't add a
+   restart/close button back in unless explicitly asked.
 
-Neither of these two screens renders the `Sidebar` — there's no per-page branding left to
-show once you're "inside" the test itself, matching the reference platform's own dashboard
-(no sidebar there either). Both are top-level `stage` values in `App.jsx`
-(`photoCapture` / `testDashboard`), same pattern as `setup`/`onboarding`.
+Neither `TestDashboardPage` nor `SolvePage` renders the `Sidebar` — there's no per-page
+branding left to show once you're "inside" the test itself, matching the reference
+platform's own dashboard (no sidebar there either). All three are top-level `stage` values
+in `App.jsx` (`testDashboard` / `solve` / `feedback`), same pattern as `setup`/`onboarding`.
+Photo capture is not a `stage` — see above.
 
 Copy not covered by the Setup page (instructions text, integrity guidelines, permission
 descriptions, form labels, button labels, footer links, completion message) is centralized
@@ -70,11 +109,12 @@ localhost as a secure context).
 ```
 src/
 ├── main.jsx                        # React root
-├── App.jsx                         # stage switch (setup/onboarding/photoCapture/testDashboard), step state, camera/fullscreen hooks
+├── App.jsx                         # stage switch (setup/onboarding/testDashboard/solve), step state, camera/fullscreen hooks
 ├── config/testConfig.js            # Defaults (Setup page's pre-filled starting values + everything it doesn't cover)
 ├── hooks/
 │   ├── useCamera.js                # getUserMedia wrapper; exposes the raw MediaStream, not just a ref (see below)
-│   └── useFullscreen.js            # Fullscreen API wrapper, tracks real state incl. Esc-to-exit
+│   ├── useFullscreen.js            # Fullscreen API wrapper, tracks real state incl. Esc-to-exit
+│   └── useCountdown.js             # Derives remaining seconds from a fixed start timestamp, not a ticking counter (see below)
 ├── utils/
 │   ├── validators.js               # Form validation helpers (isDetailsFormValid)
 │   ├── datetime.js                 # addMinutesToTime, formatDisplayDateTime — Setup page's time math
@@ -88,15 +128,19 @@ src/
 │   ├── Dropdown.jsx                # Custom-styled stand-in for <select> (floating panel, hover highlight)
 │   ├── SectionsEditor.jsx          # Add/remove/edit {name, questions} rows (used by SetupPage)
 │   ├── VideoPreview.jsx            # <video> bound to a MediaStream via its own ref+effect (see below)
+│   ├── CodeEditor.jsx              # Plain-text editor: line-number gutter + <textarea> (no syntax highlighting)
 │   ├── icons.jsx                   # Plain currentColor SVG icons (webcam/monitor/fullscreen + checklist illustrations)
-│   └── ThemeToggle.jsx             # Light/dark switch (top-right, plain SVG not emoji — see below)
+│   └── ThemeToggle.jsx             # Light/dark switch — fixed-position by default, or inline (see .theme-toggle--inline)
+├── data/
+│   └── problems.jsx                # The 3 hardcoded Solve-page problems, keyed by global question number (1/2/3)
 ├── pages/
 │   ├── SetupPage.jsx               # Runs first — company/duration/date-time/sections form
 │   ├── InstructionsPage.jsx        # Content only — no nav buttons (see App.jsx footer)
 │   ├── DetailsFormPage.jsx         # Content only — no nav buttons
 │   ├── PermissionsPage.jsx         # Content only; receives `config`/`camera`/`fullscreen` as props
-│   ├── PhotoCapturePage.jsx        # Post-"Start Test" identity-verification screen (no sidebar)
-│   └── TestDashboardPage.jsx       # Final screen — sections/questions table (no sidebar)
+│   ├── PhotoCapturePage.jsx        # Blurred overlay on TestDashboardPage, not its own stage (see below)
+│   ├── TestDashboardPage.jsx       # Sections/questions table (no sidebar)
+│   └── SolvePage.jsx               # Problem statement + code editor split screen (no sidebar)
 └── styles/index.css                # All styling: design tokens + every component's CSS
 ```
 
@@ -125,8 +169,9 @@ src/
   and the step dots render in a `.content-footer` *below* the card (`.panel`), outside its
   border — matching the reference design where the card scrolls independently and the
   footer nav floats on the page background. Pages only render their content; `App.jsx`
-  computes button labels/disabled-state per step. "Start Test" now sets `stage` to
-  `"photoCapture"` rather than opening the completion modal directly — see above.
+  computes button labels/disabled-state per step. "Start Test" now captures
+  `testStartTime`, sets `showPhotoCapture` true, and sets `stage` to `"testDashboard"`
+  rather than opening the completion modal directly — see above.
 - **`useCamera` and `useFullscreen` are instantiated in `App.jsx`**, not inside
   `PermissionsPage`, because the footer's "Start Test" button (owned by `App`) needs to
   read `camera.status` and `fullscreen.isFullscreen` to decide whether it's enabled. Also
