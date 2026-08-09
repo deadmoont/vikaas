@@ -1,11 +1,10 @@
-import testConfig from "../config/testConfig.js";
 import Dropdown from "../components/Dropdown.jsx";
 
 // Nav buttons (Back/Continue) live in the page-level footer (see App.jsx) —
 // this component only renders the form fields.
-export default function DetailsFormPage({ formData, setFormData }) {
+export default function DetailsFormPage({ config, formData, setFormData }) {
   const { workExperienceOptions, integrityAgreementText, tosAgreementPrefix, tosLabel, aiNoticeLabel } =
-    testConfig;
+    config;
 
   const update = (key, value) => setFormData((prev) => ({ ...prev, [key]: value }));
 

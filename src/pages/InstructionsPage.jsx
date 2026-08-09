@@ -1,11 +1,10 @@
 import { useState } from "react";
-import testConfig from "../config/testConfig.js";
 import Chevron from "../components/Chevron.jsx";
 
 // Nav buttons (Continue) live in the page-level footer (see App.jsx) —
 // this component only renders the instructions content.
-export default function InstructionsPage() {
-  const { instructions, sampleTestNote, sections } = testConfig;
+export default function InstructionsPage({ config }) {
+  const { instructions, sampleTestNote, sections } = config;
   const [sectionsOpen, setSectionsOpen] = useState(true);
   const [sampleNotice, setSampleNotice] = useState(false);
 
@@ -64,7 +63,7 @@ export default function InstructionsPage() {
             </thead>
             <tbody>
               {sections.map((section, i) => (
-                <tr key={section.name}>
+                <tr key={i}>
                   <td>{i + 1}</td>
                   <td>{section.name}</td>
                   <td>{section.questions}</td>

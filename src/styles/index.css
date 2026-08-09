@@ -42,15 +42,18 @@ a {
   --card-grad-top: #363d45;
   --card-grad-mid: #262b2e;
   --card-grad-bottom: #1c1f24;
-  --surface-1: #1a1a1a; /* callout box, section-details bar, sample-test button, accordion items */
+  --surface-1: #1a1a1a; /* callout box, section-details bar, sample-test button */
   --surface-2: #1e2024; /* duration box */
   --surface-table: #0d0d0d;
+  --accordion-grad-top: #434548; /* permission rows (webcam/monitor/fullscreen) — lighter than surface-1/table on purpose */
+  --accordion-grad-bottom: #2a2c30;
 
   /* borders */
   --border-subtle: rgba(255, 255, 255, 0.06);
   --border-callout: #2c2d2e;
   --border-btn-outline: #666666;
   --border-table-row: #232323;
+  --accordion-border: #5c5e60;
 
   /* text */
   --text-heading: #fafafa;
@@ -83,11 +86,14 @@ a {
   --surface-1: #f5f8f7;
   --surface-2: #eef2f0;
   --surface-table: #f7f9f8;
+  --accordion-grad-top: #eef1f0;
+  --accordion-grad-bottom: #e2e6e4;
 
   --border-subtle: rgba(10, 20, 15, 0.08);
   --border-callout: #dfe3e1;
   --border-btn-outline: #b9c2bd;
   --border-table-row: #e3e7e5;
+  --accordion-border: #c7cdd0;
 
   --text-heading: #142420;
   --text-body: #46564f;
@@ -655,9 +661,13 @@ body {
 }
 
 .accordion-item {
-  border: 1px solid var(--border-callout);
+  /* Deliberately lighter than --surface-1/--surface-table (those are for
+     the callout/section-details/table components, not this) — a subtle
+     top-to-bottom gradient plus a visible border is what separates this
+     from the darker card behind it, instead of just reading as black. */
+  border: 1px solid var(--accordion-border);
   border-radius: 12px;
-  background: var(--surface-1);
+  background: linear-gradient(180deg, var(--accordion-grad-top) 0%, var(--accordion-grad-bottom) 100%);
   overflow: hidden;
 }
 
@@ -681,12 +691,20 @@ body {
 }
 
 .accordion-icon {
-  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-heading);
 }
 
 .accordion-chevron {
   transition: transform 0.15s ease;
   color: #cccccc;
+}
+
+/* Scoped to just the permission rows (not the Instructions page's Section
+   Details toggle or the Dropdown trigger, which share this same chevron). */
+.accordion-header .accordion-chevron {
+  color: var(--text-heading);
 }
 
 .accordion-chevron--open {
@@ -713,30 +731,18 @@ body {
   font-size: 0.7rem;
 }
 
-.status-pill {
-  font-size: 0.78rem;
-  padding: 4px 10px;
-  border-radius: 999px;
-  display: inline-block;
+.face-check-preview {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-1);
 }
 
-.status-pill--success {
-  background: rgba(32, 215, 97, 0.15);
-  color: var(--success);
-}
-
-.webcam-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.webcam-preview video {
-  width: 220px;
-  max-width: 100%;
-  border-radius: 10px;
-  border: 1px solid var(--border-btn-outline);
-  background: black;
+.face-check-preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   transform: scaleX(-1); /* mirror, feels natural */
 }
 
@@ -760,7 +766,6 @@ body {
 }
 
 .btn:disabled {
-  opacity: 0.45;
   cursor: not-allowed;
 }
 
@@ -771,6 +776,13 @@ body {
 
 .btn-primary:hover:not(:disabled) {
   filter: brightness(0.92);
+}
+
+.btn-primary:disabled {
+  /* Flat neutral grey, not a dimmed green — matches disabled Grant
+     Access/Start Test/etc. in the reference. */
+  background: var(--border-btn-outline);
+  color: var(--text-heading);
 }
 
 .btn-secondary {
@@ -822,6 +834,7 @@ body {
   position: fixed;
   inset: 0;
   background: var(--overlay);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -869,19 +882,33 @@ body {
   padding: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 28px 14px;
 }
 
 .checklist li {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  text-align: center;
+}
+
+.checklist-illustration {
+  display: flex;
+  color: var(--text-body);
+}
+
+.checklist-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: var(--text-body);
   font-size: 0.88rem;
 }
 
 .check-icon {
   color: var(--accent-green);
+  flex-shrink: 0;
 }
 
 .guidelines-list {
@@ -890,4 +917,207 @@ body {
   line-height: 1.7;
   padding-left: 20px;
   margin: 0;
+}
+
+/* ============================================================================
+   SETUP PAGE
+   Runs before the app-shell/sidebar (which has nothing to show yet) — its
+   own centered single-card layout, same tokens/components as the rest of
+   the app.
+   ============================================================================ */
+.setup-page {
+  /* `.app` (the parent) is a fixed height:100vh with overflow:hidden, so
+     this needs a bounded `height` (not min-height, which just grows past
+     the parent and gets silently clipped) for its own overflow-y:auto to
+     actually create a scrollbar when the form is taller than the screen. */
+  height: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 24px;
+  overflow-y: auto;
+}
+
+.setup-card {
+  width: 100%;
+  max-width: 720px;
+  background: linear-gradient(180deg, var(--card-grad-top) 0%, var(--card-grad-mid) 28%, var(--card-grad-bottom) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 40px 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.setup-title {
+  color: var(--text-heading);
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.setup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.setup-grid--four {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 640px) {
+  .setup-grid,
+  .setup-grid--four {
+    grid-template-columns: 1fr;
+  }
+}
+
+.setup-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.setup-title-preview {
+  margin: -6px 0 4px;
+}
+
+.setup-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* ---- Sections editor (used on the setup page) ---- */
+.sections-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.sections-editor-row {
+  display: grid;
+  grid-template-columns: auto 1fr 90px auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.sections-editor-index {
+  color: var(--text-label);
+  font-size: 0.85rem;
+  width: 18px;
+  text-align: right;
+}
+
+.sections-editor-qty {
+  text-align: center;
+}
+
+.sections-editor-remove {
+  font-size: 0.95rem;
+  padding: 6px;
+}
+
+.sections-editor-remove:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.sections-editor-add {
+  align-self: flex-start;
+}
+
+/* ============================================================================
+   PHOTO CAPTURE PAGE
+   Reuses .setup-page for the same centered/scrollable full-height wrapper.
+   ============================================================================ */
+.photo-capture-card {
+  width: 100%;
+  max-width: 480px;
+  background: linear-gradient(180deg, var(--card-grad-top) 0%, var(--card-grad-mid) 28%, var(--card-grad-bottom) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+  align-items: center;
+}
+
+.photo-capture-frame {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+}
+
+.photo-capture-frame video,
+.photo-capture-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-capture-video {
+  transform: scaleX(-1); /* mirror, feels natural */
+}
+
+.photo-capture-btn {
+  margin-top: 4px;
+}
+
+.photo-capture-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+/* ============================================================================
+   TEST DASHBOARD PAGE
+   Shown after identity verification — no sidebar (nothing left to brand;
+   this is the "inside the test" screen), full-width on the page background.
+   ============================================================================ */
+.dashboard-page {
+  height: 100%;
+  overflow-y: auto;
+  padding: 48px 64px;
+}
+
+.dashboard-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.dashboard-title {
+  color: var(--text-heading);
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.dashboard-note {
+  margin-bottom: 16px;
+}
+
+.dashboard-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 900px;
+}
+
+.dashboard-solve-btn {
+  padding: 8px 20px;
+  font-size: 14px;
 }

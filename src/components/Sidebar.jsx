@@ -1,7 +1,5 @@
-import testConfig from "../config/testConfig.js";
-
-export default function Sidebar() {
-  const { testTitle, poweredBy, footerLinks, durationMinutes, loginWindow } = testConfig;
+export default function Sidebar({ config }) {
+  const { testTitle, poweredBy, footerLinks, durationMinutes, loginWindow } = config;
 
   return (
     <aside className="sidebar">

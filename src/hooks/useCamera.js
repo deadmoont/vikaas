@@ -3,17 +3,24 @@ import { useCallback, useEffect, useRef, useState } from "react";
 /**
  * Wraps navigator.mediaDevices.getUserMedia for a webcam preview.
  * status: "idle" | "requesting" | "granted" | "denied" | "unsupported"
+ *
+ * Exposes the raw MediaStream (not just a single video ref) because this
+ * app shows the live feed in more than one place at different times (the
+ * face-check modal, then the accordion's inline preview) — a stream can be
+ * attached to any number of independent <video> elements via `.srcObject`,
+ * but a single shared ref can only ever point at one DOM node at a time.
+ * See `VideoPreview` for the consumer side of this.
  */
 export default function useCamera() {
-  const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const [stream, setStream] = useState(null);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
 
   const stop = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
-    if (videoRef.current) videoRef.current.srcObject = null;
+    setStream(null);
   }, []);
 
   const requestAccess = useCallback(async () => {
@@ -27,11 +34,9 @@ export default function useCamera() {
 
     setStatus("requesting");
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      streamRef.current = mediaStream;
+      setStream(mediaStream);
       setStatus("granted");
     } catch (err) {
       setStatus("denied");
@@ -45,5 +50,5 @@ export default function useCamera() {
 
   useEffect(() => stop, [stop]);
 
-  return { videoRef, status, error, requestAccess, stop };
+  return { stream, status, error, requestAccess, stop };
 }

@@ -1,12 +1,11 @@
-import { useState } from "react";
 import Chevron from "./Chevron.jsx";
 
-export default function AccordionItem({ icon, title, status, defaultOpen = false, children }) {
-  const [open, setOpen] = useState(defaultOpen);
-
+// Controlled (not self-managed) — PermissionsPage owns which single item is
+// open so it can enforce "only one at a time" and auto-advance between them.
+export default function AccordionItem({ icon, title, status, open, onToggle, children }) {
   return (
     <div className="accordion-item">
-      <button className="accordion-header" onClick={() => setOpen((o) => !o)}>
+      <button className="accordion-header" onClick={onToggle}>
         <span className="accordion-title">
           <span className="accordion-icon">{icon}</span>
           {title}
