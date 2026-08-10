@@ -21,6 +21,11 @@ const testConfig = {
     { label: "FAQ", href: "#" },
   ],
 
+  // Stamped as a repeating diagonal watermark across the problem-description
+  // panel on the Solve page (screenshot/leak deterrent, matching real
+  // proctored assessment platforms). Settable on the Setup page.
+  candidateEmail: "iit2023131@iiita.ac.in",
+
   // ---- Timing / login window -------------------------------------------
   durationMinutes: 90,
   loginWindow: {
@@ -123,6 +128,14 @@ const testConfig = {
   submittedMessage:
     "HackerRank has received your assessment. If you have any questions or need support, please reply to the invitation email you received.",
   feedbackPrompt: "Let us know your feedback",
+  feedbackPlaceholder: "Enter your feedback here...",
+  feedbackSubmitLabel: "Submit",
+
+  // Shown in place of the above once feedback is actually submitted.
+  feedbackThanksTitle: "Thank you for your feedback",
+  feedbackThanksMessage:
+    "This test was created on HackerRank. While you're waiting to hear back, practice answering real interview questions with AI-powered mock interviews.",
+  mockInterviewLabel: "Take a mock interview",
 };
 
 export default testConfig;

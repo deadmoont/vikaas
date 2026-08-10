@@ -1724,21 +1724,122 @@ body {
   overflow: hidden;
 }
 
+/* Same footprint as .code-editor — shown in its place while isLoading. */
+.code-editor-loading {
+  flex: 1;
+  min-height: 0;
+  background: var(--surface-table);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 400px;
+}
+
+/* A real 6-faced wireframe cube built from CSS 3D transforms (not a flat
+   rectangle) — each face is one positioned/rotated div, the whole group
+   spins via the keyframe below. */
+.loading-cube {
+  width: 32px;
+  height: 32px;
+  position: relative;
+  transform-style: preserve-3d;
+  animation: loading-cube-spin 2.2s linear infinite;
+}
+
+.loading-cube-face {
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid var(--text-link);
+  background: rgba(91, 141, 255, 0.08);
+}
+
+.loading-cube-face--front {
+  transform: translateZ(16px);
+}
+
+.loading-cube-face--back {
+  transform: translateZ(-16px) rotateY(180deg);
+}
+
+.loading-cube-face--right {
+  transform: rotateY(90deg) translateZ(16px);
+}
+
+.loading-cube-face--left {
+  transform: rotateY(-90deg) translateZ(16px);
+}
+
+.loading-cube-face--top {
+  transform: rotateX(90deg) translateZ(16px);
+}
+
+.loading-cube-face--bottom {
+  transform: rotateX(-90deg) translateZ(16px);
+}
+
+@keyframes loading-cube-spin {
+  from {
+    transform: rotateX(-20deg) rotateY(0deg);
+  }
+  to {
+    transform: rotateX(-20deg) rotateY(360deg);
+  }
+}
+
 .code-editor-gutter {
   flex-shrink: 0;
-  width: 44px;
+  width: 52px;
   overflow: hidden;
   padding: 12px 0;
-  text-align: right;
   color: var(--text-muted);
   font-family: "Menlo", "Consolas", monospace;
   font-size: 13px;
   line-height: 1.6;
-  background: var(--surface-1);
+  /* Same background as .code-editor's own — no separate boxed/highlighted
+     panel behind the numbers, they just sit on the editor's own surface. */
+  background: var(--surface-table);
+  /* Numbers stay visible but aren't real selectable text — otherwise a
+     drag-select starting in the code can paint a text-selection highlight
+     across the gutter too, which shouldn't be highlightable. */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.code-editor-gutter div {
+.code-editor-gutter-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
   padding-right: 10px;
+}
+
+.code-editor-fold-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: transform 0.12s ease, color 0.12s ease;
+}
+
+.code-editor-fold-toggle:hover {
+  color: var(--text-heading);
+}
+
+.code-editor-fold-spacer {
+  flex-shrink: 0;
+  width: 12px;
+}
+
+.code-editor-line-no {
+  min-width: 20px;
+  text-align: right;
 }
 
 /* Holds the highlight <pre> and the real <textarea> stacked exactly on top
@@ -2223,7 +2324,89 @@ body {
   transform: scale(1.12);
 }
 
-.feedback-thanks {
-  color: var(--success);
-  margin: 0;
+.feedback-textarea {
+  width: 100%;
+  min-height: 90px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-btn-outline);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--text-heading);
+  font-family: var(--font-family);
+  font-size: 0.95rem;
+  resize: vertical;
+}
+
+.feedback-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.feedback-textarea:focus {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 1px;
+}
+
+.feedback-submit-btn,
+.feedback-mock-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- Loading stage (Setup -> Instructions, Start Test -> Test Dashboard) --
+   Bare full-viewport wrapper, no background override, so the app's usual
+   dark gradient glow shows through behind it — matches FeedbackPage's
+   wrapper approach rather than the flat testDashboard/solve screens. */
+.loading-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.loading-dots {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.loading-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--border-btn-outline);
+  animation: loading-dot-bounce 1.2s ease-in-out infinite;
+}
+
+.loading-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.loading-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes loading-dot-bounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0) scale(1);
+    background: var(--border-btn-outline);
+  }
+  40% {
+    transform: translateY(-8px) scale(1.2);
+    background: var(--accent-green);
+  }
+}
+
+.loading-page-message {
+  color: var(--text-body);
+  font-size: 15px;
+  font-weight: 400;
 }

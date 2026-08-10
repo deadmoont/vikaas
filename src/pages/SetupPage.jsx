@@ -16,6 +16,7 @@ const blankFields = () => ({
   testDate: todayIso(),
   startTime: "19:00",
   timezoneLabel: "IST(+05:30)",
+  candidateEmail: defaultConfig.candidateEmail,
   sections: defaultConfig.sections.map((s) => ({ name: s.name, questions: s.questions })),
 });
 
@@ -159,6 +160,26 @@ export default function SetupPage({ initialFields, onComplete }) {
           Login window preview: <strong>{startDisplay || "…"}</strong> to{" "}
           <strong>{endDisplay || "…"}</strong> {fields.timezoneLabel} (end time is start +
           duration, computed automatically).
+        </p>
+
+        <div className="setup-grid">
+          <div>
+            <label className="field-label" htmlFor="candidateEmail">
+              Candidate Email
+            </label>
+            <input
+              id="candidateEmail"
+              className="text-input"
+              type="email"
+              placeholder="e.g. iit2023131@iiita.ac.in"
+              value={fields.candidateEmail}
+              onChange={(e) => set("candidateEmail", e.target.value)}
+            />
+          </div>
+        </div>
+        <p className="muted-text">
+          Stamped as a repeating watermark across the problem description on the Solve page —
+          matches how proctored platforms discourage screenshotting questions.
         </p>
 
         <label className="field-label">

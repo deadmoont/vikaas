@@ -250,3 +250,14 @@ export function FaceVisibleIcon() {
     </svg>
   );
 }
+
+// Code-editor gutter fold arrow — points down when a foldable block (a
+// comment or a brace body) is expanded, rotates to point right when it's
+// collapsed. Deliberately tiny/plain to sit inline with line numbers.
+export function FoldChevronIcon() {
+  return (
+    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}

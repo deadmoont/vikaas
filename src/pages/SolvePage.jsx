@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import Dropdown from "../components/Dropdown.jsx";
 import CodeEditor from "../components/CodeEditor.jsx";
@@ -21,6 +21,7 @@ import {
 } from "../components/icons.jsx";
 import problems, { LANGUAGES } from "../data/problems.jsx";
 import useCountdown from "../hooks/useCountdown.js";
+import { buildWatermarkBackground } from "../utils/watermark.js";
 
 const TOTAL_TEST_CASES = 15;
 
@@ -51,9 +52,20 @@ export default function SolvePage({
   durationMinutes,
   submittedQuestions,
   onSubmitQuestion,
+  savedCode,
+  onCodeChange,
+  candidateEmail,
 }) {
   const problem = problems[questionId];
+  // Tiled diagonal watermark stamped behind the problem description — only
+  // ever recomputed if the email actually changes, not on every render.
+  const watermarkBackground = useMemo(() => buildWatermarkBackground(candidateEmail), [candidateEmail]);
   const secondsLeft = useCountdown(testStartTime, durationMinutes);
+  // Derived from props, not local state — savedCode (lifted to App.jsx)
+  // is what actually survives this component remounting on every question
+  // switch; falls back to the starter template the first time a question
+  // is opened.
+  const code = savedCode ?? problem?.starterCode ?? "// No starter code available.\n";
 
   // Rail groups question badges under their section's label (S1/S2/S3...),
   // numbered globally across sections — same numbering TestDashboardPage
@@ -68,7 +80,11 @@ export default function SolvePage({
   }));
 
   const [language, setLanguage] = useState(LANGUAGES[2]); // "C++23"
-  const [code, setCode] = useState(problem?.starterCode ?? "// No starter code available.\n");
+  // Brief loading transition whenever this mounts (i.e. every time a
+  // question is opened or switched to, since App.jsx remounts this via
+  // key={activeQuestionId}) — matches the reference platform's own
+  // loading spinner before the editor content appears.
+  const [isLoading, setIsLoading] = useState(true);
   const [leftWidth, setLeftWidth] = useState(42); // percent, horizontal split
   const [editorHeight, setEditorHeight] = useState(62); // percent, vertical split
   const [expanded, setExpanded] = useState(false); // editor-only fullscreen toggle
@@ -84,6 +100,11 @@ export default function SolvePage({
   const runTimer = useRef(null);
 
   useEffect(() => () => clearTimeout(runTimer.current), []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 600);
+    return () => clearTimeout(timer);
+  }, []);
 
   const startHDrag = (e) => {
     hDrag.current = { startX: e.clientX, startWidth: leftWidth };
@@ -132,7 +153,7 @@ export default function SolvePage({
     clearTimeout(runTimer.current);
     setRunStatus("idle");
   };
-  const handleResetCode = () => setCode(problem?.starterCode ?? "");
+  const handleResetCode = () => onCodeChange(problem?.starterCode ?? "");
 
   // "Proceed" here means back to the dashboard — this demo doesn't chain
   // straight into the next question. Marks the question submitted first, so
@@ -218,7 +239,14 @@ export default function SolvePage({
         </div>
 
         {!expanded && (
-          <div className="solve-panel solve-panel--problem" style={{ width: `${leftWidth}%` }}>
+          <div
+            className="solve-panel solve-panel--problem"
+            style={{
+              width: `${leftWidth}%`,
+              backgroundImage: watermarkBackground,
+              backgroundRepeat: "repeat",
+            }}
+          >
             <div className="solve-problem-header">
               <BookmarkIcon />
               <h1>{problem.title}</h1>
@@ -279,7 +307,22 @@ export default function SolvePage({
 
           <div className="solve-editor-split">
             <div className="solve-editor-area" style={{ height: resultsOpen ? `${editorHeight}%` : "100%" }}>
-              <CodeEditor value={code} onChange={setCode} />
+              {isLoading ? (
+                <div className="code-editor-loading">
+                  {/* A real rotating 3D wireframe cube (6 faces + CSS 3D
+                      transforms), not a flat rectangle. */}
+                  <div className="loading-cube">
+                    <div className="loading-cube-face loading-cube-face--front" />
+                    <div className="loading-cube-face loading-cube-face--back" />
+                    <div className="loading-cube-face loading-cube-face--right" />
+                    <div className="loading-cube-face loading-cube-face--left" />
+                    <div className="loading-cube-face loading-cube-face--top" />
+                    <div className="loading-cube-face loading-cube-face--bottom" />
+                  </div>
+                </div>
+              ) : (
+                <CodeEditor value={code} onChange={onCodeChange} />
+              )}
               <div className="solve-status-bar">
                 <span>Ln 1, Col 1</span>
                 <span className="solve-status-dot" /> <span>Autocomplete</span>

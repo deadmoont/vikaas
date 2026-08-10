@@ -11,6 +11,7 @@ import PhotoCapturePage from "./pages/PhotoCapturePage.jsx";
 import TestDashboardPage from "./pages/TestDashboardPage.jsx";
 import SolvePage from "./pages/SolvePage.jsx";
 import FeedbackPage from "./pages/FeedbackPage.jsx";
+import LoadingPage from "./components/LoadingPage.jsx";
 import useCamera from "./hooks/useCamera.js";
 import useFullscreen from "./hooks/useFullscreen.js";
 import { isDetailsFormValid } from "./utils/validators.js";
@@ -38,6 +39,9 @@ export default function App() {
   const [setupFields, setSetupFields] = useState(null);
   const [stage, setStage] = useState("setup");
   const [showPhotoCapture, setShowPhotoCapture] = useState(false);
+  // Message shown by the brief "loading" stage inserted between Setup ->
+  // Instructions and Start Test -> Test Dashboard (see transitionTo below).
+  const [loadingMessage, setLoadingMessage] = useState(null);
 
   const [stepIndex, setStepIndex] = useState(0);
   // Tracks which way we just navigated so the incoming step's slide
@@ -54,6 +58,14 @@ export default function App() {
   // drives "Solve" -> "Modify" on the dashboard and the checkmark badge on
   // SolvePage's rail. Not persisted; resets with the rest of the demo.
   const [submittedQuestions, setSubmittedQuestions] = useState(() => new Set());
+  // Per-question code, keyed by questionId — lifted up here (not local state
+  // inside SolvePage) specifically because SolvePage remounts on every
+  // question switch (key={activeQuestionId}, so its own UI state like
+  // language/run-status resets cleanly between questions). If code lived
+  // there too, that same remount would wipe out whatever the candidate had
+  // typed the moment they switched questions or went back to the dashboard.
+  // This survives navigation and only ever clears on a real page refresh.
+  const [codeByQuestion, setCodeByQuestion] = useState({});
   const scrollRef = useRef(null);
 
   // Lifted up (rather than living inside PermissionsPage) so the page-level
@@ -67,11 +79,25 @@ export default function App() {
     [setupFields]
   );
 
+  // Briefly shows the "Fetching test details" loading stage, then hands off
+  // to `land` (which sets whatever stage/state the transition was actually
+  // headed toward). Used at the two points that go somewhere new rather than
+  // just stepping within onboarding: Setup -> Instructions, and
+  // Start Test -> Test Dashboard.
+  const transitionTo = (message, land) => {
+    setLoadingMessage(message);
+    setStage("loading");
+    setTimeout(() => {
+      land();
+      setLoadingMessage(null);
+    }, 1400);
+  };
+
   const handleSetupComplete = (fields) => {
     setSetupFields(fields);
     setStepIndex(0);
     setDirection(1);
-    setStage("onboarding");
+    transitionTo("Fetching test details", () => setStage("onboarding"));
   };
 
   const goTo = (index) => {
@@ -93,10 +119,20 @@ export default function App() {
       return next;
     });
 
+  const updateQuestionCode = (id, code) => setCodeByQuestion((prev) => ({ ...prev, [id]: code }));
+
   const canContinueDetails = isDetailsFormValid(formData);
   const canStartTest = camera.status === "granted" && fullscreen.isFullscreen;
 
   const handleToggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+
+  if (stage === "loading") {
+    return (
+      <div className={`app app--${theme}`} data-theme={theme}>
+        <LoadingPage message={loadingMessage} />
+      </div>
+    );
+  }
 
   if (stage === "setup") {
     return (
@@ -148,6 +184,9 @@ export default function App() {
           durationMinutes={config.durationMinutes}
           submittedQuestions={submittedQuestions}
           onSubmitQuestion={markQuestionSubmitted}
+          savedCode={codeByQuestion[activeQuestionId]}
+          onCodeChange={(code) => updateQuestionCode(activeQuestionId, code)}
+          candidateEmail={config.candidateEmail}
         />
       </div>
     );
@@ -219,12 +258,17 @@ export default function App() {
                   className="btn btn-primary"
                   disabled={!canStartTest}
                   onClick={() => {
-                    // Timer starts now — the dashboard (and its live
-                    // countdown) is visible immediately, just blurred behind
-                    // the capture overlay, not gated behind a blank page.
-                    setTestStartTime(Date.now());
-                    setShowPhotoCapture(true);
-                    setStage("testDashboard");
+                    // Timer starts once the dashboard actually lands (after
+                    // the loading stage below), not before — the countdown
+                    // shouldn't burn time while "Fetching test details" is
+                    // still on screen. The dashboard (and its live countdown)
+                    // is then visible immediately, just blurred behind the
+                    // capture overlay, not gated behind a blank page.
+                    transitionTo("Fetching test details", () => {
+                      setTestStartTime(Date.now());
+                      setShowPhotoCapture(true);
+                      setStage("testDashboard");
+                    });
                   }}
                 >
                   {config.startTestLabel}
