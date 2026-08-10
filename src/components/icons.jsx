@@ -173,6 +173,27 @@ export function XCircleIcon() {
   );
 }
 
+// Plain check/cross marks (no circle backing) — used where the reference
+// shows just the glyph itself, e.g. next to each Test Case row and the
+// results banner, as opposed to CheckCircleIcon's filled-circle badge look
+// (still used for the submitted-question rail marker).
+export function CheckIcon() {
+  return (
+    <svg {...iconProps} aria-hidden="true">
+      <polyline points="4 13 9 18 20 6" />
+    </svg>
+  );
+}
+
+export function XIcon() {
+  return (
+    <svg {...iconProps} aria-hidden="true">
+      <line x1="6" y1="6" x2="18" y2="18" />
+      <line x1="18" y1="6" x2="6" y2="18" />
+    </svg>
+  );
+}
+
 export function SpinnerIcon({ className }) {
   return (
     <svg
@@ -247,6 +268,69 @@ export function FaceVisibleIcon() {
       <rect x="10" y="8" width="44" height="44" rx="4" strokeDasharray="4 4" />
       <circle cx="32" cy="26" r="8" />
       <path d="M18 48c0-8 6.5-14.5 14-14.5S46 40 46 48" />
+    </svg>
+  );
+}
+
+// Split-panel glyph — the question-rail's collapse toggle, and (sized the
+// same way) the top button on the parallel icon-only side rail.
+export function PanelToggleIcon({ width = 18, height = 18 }) {
+  return (
+    <svg width={width} height={height} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <rect x="3" y="4" width="18" height="16" rx="3" />
+      <line x1="9" y1="4" x2="9" y2="20" />
+      <polyline points="5.5 9 7.5 12 5.5 15" />
+    </svg>
+  );
+}
+
+// Rounded note/list glyph — the top button on the second (icon-only) side
+// rail, distinct from PanelToggleIcon (same box size, different shape).
+export function NotesIcon({ width = 18, height = 18 }) {
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <rect x="4" y="4" width="16" height="16" rx="3" />
+      <line x1="8" y1="9" x2="16" y2="9" />
+      <line x1="8" y1="12" x2="16" y2="12" />
+      <line x1="8" y1="15" x2="16" y2="15" />
+    </svg>
+  );
+}
+
+// Settings gear — bottom icon on that same side rail.
+export function SettingsIcon() {
+  return (
+    <svg {...iconProps} width={18} height={18} aria-hidden="true">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  );
+}
+
+// Solid filled disclosure triangle (▶ collapsed, rotates to ▼ expanded) —
+// used for the Sample Case toggle specifically, where the reference shows a
+// filled arrow rather than the outlined Chevron used everywhere else
+// (accordions, dropdowns, Test Results).
+export function FilledTriangleIcon({ open }) {
+  return (
+    <svg
+      width="9"
+      height="9"
+      viewBox="0 0 10 10"
+      fill="currentColor"
+      style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s ease" }}
+      aria-hidden="true"
+    >
+      <polygon points="1,0 9,5 1,10" />
     </svg>
   );
 }

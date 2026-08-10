@@ -5,16 +5,7 @@ import Modal from "../components/Modal.jsx";
 import { HelpCircleIcon, ClockIcon, BookmarkIcon } from "../components/icons.jsx";
 import problems from "../data/problems.jsx";
 import useCountdown from "../hooks/useCountdown.js";
-
-function formatCountdown(totalSeconds) {
-  const clamped = Math.max(0, totalSeconds);
-  const h = Math.floor(clamped / 3600);
-  const m = Math.floor((clamped % 3600) / 60);
-  const s = clamped % 60;
-  const mm = String(m).padStart(h > 0 ? 2 : 1, "0");
-  const ss = String(s).padStart(2, "0");
-  return h > 0 ? `${h} hr ${mm} min ${ss} sec` : `${mm} min ${ss} sec`;
-}
+import { formatCountdown, countdownUrgency } from "../utils/formatCountdown.js";
 
 // Shown after identity verification — lists the sections/questions exactly
 // as configured on the Setup page. Only the first 3 questions (global
@@ -38,6 +29,7 @@ export default function TestDashboardPage({
     confirmSubmitMessage,
     confirmSubmitNoLabel,
     confirmSubmitYesLabel,
+    companyLogo,
   } = config;
   const [demoNote, setDemoNote] = useState(false);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
@@ -56,9 +48,19 @@ export default function TestDashboardPage({
           flow is what guarantees the title below can never look like part
           of the header, rather than tuning padding to clear a floating bar. */}
       <div className="dashboard-topbar">
-        <div className="dashboard-timer">
-          <ClockIcon />
-          {formatCountdown(secondsLeft)}
+        <div className="dashboard-topbar-left">
+          {/* Only rendered once a logo is actually uploaded on the Setup
+              page (see SetupPage.jsx) — otherwise this row is just the
+              timer, unchanged from before. */}
+          {companyLogo && (
+            <div className="dashboard-logo">
+              <img src={companyLogo} alt="" />
+            </div>
+          )}
+          <div className={`dashboard-timer dashboard-timer--${countdownUrgency(secondsLeft)}`}>
+            <ClockIcon />
+            {formatCountdown(secondsLeft)}
+          </div>
         </div>
 
         {/* Theme toggle, help, then Submit Test — in that order. ThemeToggle

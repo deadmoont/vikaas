@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ffmpeg -y -i loader.mp4 -vf \"select=eq\\(n\\\\,0\\),crop=1:1:400:400\" -vframes 1 -f rawvideo -pix_fmt rgb24 -)",
+      "Bash(xxd)",
+      "Bash(ffmpeg -y -i loader.mp4 -vf \"crop=4:4:400:400\" -vframes 1 -f rawvideo -pix_fmt rgb24 /tmp/pix.raw)",
+      "Bash(xxd /tmp/pix.raw)"
+    ]
+  }
+}

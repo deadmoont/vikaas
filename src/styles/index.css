@@ -68,6 +68,7 @@ a {
   --accent-green: #20d761;
   --text-on-green: #0d0d0d;
   --danger: #ff6b6b;
+  --warning: #ffb020; /* extension: orange/yellow countdown-timer urgency tier */
   --success: var(--accent-green);
   --overlay: rgba(6, 8, 10, 0.7);
   --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
@@ -107,6 +108,7 @@ a {
   --accent-green: #1fa653;
   --text-on-green: #ffffff;
   --danger: #c73434;
+  --warning: #b8710a;
   --success: var(--accent-green);
   --overlay: rgba(10, 20, 17, 0.35);
   --shadow: 0 20px 60px rgba(20, 40, 30, 0.15);
@@ -554,6 +556,37 @@ body {
 
 .text-input::placeholder {
   color: var(--text-muted);
+}
+
+.logo-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-upload-preview {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--surface-1);
+  object-fit: contain;
+  padding: 3px;
+}
+
+.logo-upload-remove {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-link);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-family);
+  white-space: nowrap;
+}
+
+.logo-upload-remove:hover {
+  text-decoration: underline;
 }
 
 .text-input:focus {
@@ -1149,6 +1182,32 @@ body {
   gap: 14px;
 }
 
+.dashboard-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Only rendered when a logo was actually uploaded on the Setup page — see
+   .dashboard-topbar-left usage in TestDashboardPage.jsx/SolvePage.jsx. */
+.dashboard-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--surface-1);
+  overflow: hidden;
+}
+
+.dashboard-logo img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 /* Renders inline here (not App.jsx's usual independently-fixed instance —
    see .theme-toggle--inline) so it shares this row with the help/submit
    buttons instead of floating separately. */
@@ -1197,6 +1256,21 @@ body {
   color: var(--accent-green);
   font-size: 14px;
   font-weight: 400;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Under 10 minutes left — seconds reappear (see formatCountdown.js) and the
+   pill shifts to an amber warning tone. */
+.dashboard-timer--warning {
+  background: #2b220a;
+  color: var(--warning);
+}
+
+/* Under 2 minutes left — red, the same tone used for other errors/danger
+   states across the app. */
+.dashboard-timer--critical {
+  background: #2a0d0d;
+  color: var(--danger);
 }
 
 .dashboard-body {
@@ -1353,8 +1427,8 @@ body {
 }
 
 .solve-rail-toggle {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -1404,6 +1478,36 @@ body {
   color: var(--accent-green);
 }
 
+/* ---- Second icon-only rail, parallel to .solve-rail ---- */
+.solve-side-rail {
+  width: 44px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 0;
+  border-right: 1px solid #333333;
+}
+
+.solve-side-rail-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--text-body);
+}
+
+/* First button stays pinned to the top (default flow); this one is pushed
+   all the way down to the bottom of the rail. A dedicated class rather
+   than :last-child — positional selectors here have bitten this project
+   before (see the .test-case-row-lock history). */
+.solve-side-rail-btn--bottom {
+  margin-top: auto;
+}
+
 /* ---- Panels + divider ---- */
 .solve-panel {
   min-width: 0;
@@ -1448,6 +1552,8 @@ body {
 
 .solve-panel--problem {
   padding: 28px 32px;
+  background-image: var(--watermark-bg, none);
+  background-repeat: repeat;
 }
 
 .solve-panel--editor {
@@ -1549,6 +1655,11 @@ body {
   overflow: hidden;
   margin-bottom: 14px;
   background: var(--surface-table);
+  /* Redraws the same watermark (inherited from .solve-panel--problem, see
+     index.css/SolvePage.jsx) on top of this box's own opaque surface color
+     — otherwise the solid background would fully hide the pattern here. */
+  background-image: var(--watermark-bg, none);
+  background-repeat: repeat;
 }
 
 .sample-case-title {
@@ -1563,7 +1674,9 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--surface-1);
+  background-color: var(--surface-1);
+  background-image: var(--watermark-bg, none);
+  background-repeat: repeat;
   border: none;
   color: var(--text-heading);
   font-size: 14px;
@@ -1584,6 +1697,17 @@ body {
   margin-top: 0;
 }
 
+/* Boxes the STDIN/FUNCTION table on its own card — same surface as
+   .sample-case-block below, so Input and Output read as two clearly
+   separated boxes rather than the table floating on the bare panel. */
+.sample-case-io-box {
+  background-color: var(--surface-1);
+  background-image: var(--watermark-bg, none);
+  background-repeat: repeat;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
 .sample-case-io-table {
   width: 100%;
   border-collapse: collapse;
@@ -1593,14 +1717,31 @@ body {
 
 .sample-case-io-table th {
   text-align: left;
+  padding: 4px 10px 6px 0;
+}
+
+.sample-case-io-th-label {
+  display: block;
   text-transform: uppercase;
   font-size: 11px;
   letter-spacing: 0.05em;
   color: var(--text-label);
   font-family: var(--font-family);
   font-weight: 600;
-  padding: 4px 10px 6px 0;
-  border-bottom: 1px solid var(--border-table-row);
+}
+
+/* A literal row of dashes sized to the header word above it (not a CSS
+   border spanning the full stretched column) — matches the reference's
+   ASCII-underline look exactly, bold/monospace so it reads as a solid
+   dashed rule rather than a thin line. */
+.sample-case-io-th-dashes {
+  display: block;
+  font-family: "Menlo", "Consolas", monospace;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 2px;
+  color: var(--text-label);
+  white-space: pre;
 }
 
 .sample-case-io-table td {
@@ -1618,7 +1759,13 @@ body {
   font-family: "Menlo", "Consolas", monospace;
   font-size: 13px;
   color: var(--text-row);
-  background: var(--surface-1);
+  background-color: var(--surface-1);
+  /* Only actually paints anything where --watermark-bg is inherited (the
+     problem panel's Sample Output) — this class is also reused for the
+     Input/Output/Expected boxes on the code-editor side, which sit outside
+     that subtree and fall back to `none`. */
+  background-image: var(--watermark-bg, none);
+  background-repeat: repeat;
   border-radius: 6px;
   padding: 8px 10px;
   margin: 0;
@@ -1941,11 +2088,9 @@ body {
   min-height: 0;
   border: 1px solid var(--border-callout);
   border-radius: 8px;
-  overflow-y: auto;
-
-  /* Firefox */
-  scrollbar-width: thin;
-  scrollbar-color: #4d4d4d transparent;
+  /* Clips to the rounded corners — the header/tabs/banner below stay put
+     (see .solve-results-content for the part that actually scrolls). */
+  overflow: hidden;
 }
 
 .solve-results-header {
@@ -2033,14 +2178,44 @@ body {
 }
 
 .solve-results-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   padding: 14px;
 }
 
 .solve-results-tabs {
   display: flex;
+  flex-shrink: 0;
   gap: 20px;
   border-bottom: 1px solid var(--border-table-row);
   margin-bottom: 14px;
+}
+
+/* Everything below the tabs/banner that actually scrolls — the header,
+   tabs, and status banner above it (siblings, not children) stay frozen. */
+.solve-results-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #4d4d4d transparent;
+}
+
+.solve-results-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.solve-results-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.solve-results-content::-webkit-scrollbar-thumb {
+  background-color: #4d4d4d;
+  border-radius: 8px;
 }
 
 .solve-results-tab {
@@ -2072,6 +2247,7 @@ body {
   font-size: 13px;
   font-weight: 600;
   margin-bottom: 14px;
+  flex-shrink: 0;
 }
 
 .test-status-banner--running {
@@ -2081,8 +2257,9 @@ body {
 
 .test-status-banner--passed,
 .test-status-banner--failed {
-  /* Label text stays neutral white — only the icon carries color (see
-     .test-case-row for the same fix on the list rows above). */
+  /* Label text stays neutral white — only the plain check/X glyph (no
+     circle backing — see .test-case-row below for the same treatment)
+     carries the pass/fail color. */
   background: var(--surface-1);
   color: var(--text-heading);
 }
@@ -2127,6 +2304,11 @@ body {
   border: 1px solid var(--border-callout);
   border-radius: 8px;
   overflow: hidden;
+  /* Fills whatever height .solve-results-content has available, rather
+     than just a floor — that bounded height is what lets the list/detail
+     panes below scroll independently instead of the whole block growing
+     past the panel and being scrolled as one unit. */
+  flex: 1;
   min-height: 200px;
 }
 
@@ -2137,6 +2319,7 @@ body {
   flex-direction: column;
   border-right: 1px solid var(--border-callout);
   overflow-y: auto;
+  min-height: 0;
 
   /* Firefox */
   scrollbar-width: thin;
@@ -2184,6 +2367,7 @@ body {
 .test-case-detail {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   padding: 16px;
   overflow-y: auto;
 
@@ -2223,9 +2407,67 @@ body {
   margin-bottom: 0;
 }
 
+/* Boxed "Compiler Message" card — full-width divider between the bold
+   title and the value, so both sit flush against the card's own border
+   rather than the plain unboxed label+text pairing used further down. */
+.test-detail-box {
+  background: var(--surface-1);
+  border: 1px solid var(--border-callout);
+  border-radius: 10px;
+  padding: 14px 0;
+  margin-bottom: 16px;
+}
+
+.test-detail-box-title {
+  display: block;
+  padding: 0 16px;
+  margin: 0 0 12px;
+  color: var(--text-heading);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.test-detail-box-divider {
+  height: 1px;
+  background: var(--border-table-row);
+  margin: 0 0 12px;
+}
+
 .test-detail-compiler {
-  margin: 4px 0 0;
-  font-weight: 600;
+  margin: 0;
+  padding: 0 16px;
+  color: var(--text-row);
+  font-size: 14px;
+}
+
+/* Shown in place of Input/Output/Expected Output for a locked (hidden)
+   test case — there's no real I/O to reveal, so this explains why rather
+   than fabricating data that was never real. */
+.hidden-test-case-box {
+  background: var(--surface-1);
+  border: 1px solid var(--border-callout);
+  border-radius: 10px;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.hidden-test-case-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-heading);
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+.hidden-test-case-desc {
+  max-width: 460px;
+  margin: 0 auto;
+  color: var(--text-body);
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .test-detail-heading {
@@ -2366,42 +2608,81 @@ body {
   gap: 20px;
 }
 
-.loading-dots {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* Extension tokens for the orbit dot's grey->green pulse — no single
+   existing token covers this gradient, so these are named the same way
+   --danger/--success/--text-muted were (see the Design system notes). */
+.loading-orbit {
+  --loader-dim: #4a4f52;
+  --loader-mid: #6fae43;
+  --loader-bright: var(--accent-green);
+  position: relative;
+  width: 40px;
+  height: 40px;
 }
 
-.loading-dot {
-  width: 10px;
-  height: 10px;
+/* Four dots orbiting the same elliptical path, 90° (1/4 cycle) apart via
+   negative animation-delay — each pulses dim-grey/small at the back of the
+   orbit (top) to bright-green/large at the front (bottom), matching
+   loader.mp4's four-dot "tumbling ring" reference exactly. */
+.loading-orbit-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 11px;
+  height: 11px;
+  margin: -5.5px 0 0 -5.5px;
   border-radius: 999px;
-  background: var(--border-btn-outline);
-  animation: loading-dot-bounce 1.2s ease-in-out infinite;
+  animation: loading-orbit-move 3.2s ease-in-out infinite;
 }
 
-.loading-dot:nth-child(1) {
+.loading-orbit-dot:nth-child(1) {
   animation-delay: 0s;
 }
 
-.loading-dot:nth-child(2) {
-  animation-delay: 0.2s;
+.loading-orbit-dot:nth-child(2) {
+  animation-delay: -0.8s;
 }
 
-.loading-dot:nth-child(3) {
-  animation-delay: 0.4s;
+.loading-orbit-dot:nth-child(3) {
+  animation-delay: -1.6s;
 }
 
-@keyframes loading-dot-bounce {
-  0%,
-  80%,
-  100% {
-    transform: translateY(0) scale(1);
-    background: var(--border-btn-outline);
+.loading-orbit-dot:nth-child(4) {
+  animation-delay: -2.4s;
+}
+
+@keyframes loading-orbit-move {
+  0% {
+    transform: translate(0, -14px) scale(0.65);
+    background: var(--loader-dim);
   }
-  40% {
-    transform: translateY(-8px) scale(1.2);
-    background: var(--accent-green);
+  12.5% {
+    transform: translate(10px, -10px) scale(0.8);
+  }
+  25% {
+    transform: translate(14px, 0) scale(0.9);
+    background: var(--loader-mid);
+  }
+  37.5% {
+    transform: translate(10px, 10px) scale(1);
+  }
+  50% {
+    transform: translate(0, 14px) scale(1.15);
+    background: var(--loader-bright);
+  }
+  62.5% {
+    transform: translate(-10px, 10px) scale(1);
+  }
+  75% {
+    transform: translate(-14px, 0) scale(0.9);
+    background: var(--loader-mid);
+  }
+  87.5% {
+    transform: translate(-10px, -10px) scale(0.8);
+  }
+  100% {
+    transform: translate(0, -14px) scale(0.65);
+    background: var(--loader-dim);
   }
 }
 

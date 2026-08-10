@@ -13,7 +13,11 @@ import {
   FullscreenIcon,
   LockIcon,
   CheckCircleIcon,
-  XCircleIcon,
+  CheckIcon,
+  XIcon,
+  PanelToggleIcon,
+  NotesIcon,
+  SettingsIcon,
   SpinnerIcon,
   PlayIcon,
   DownloadIcon,
@@ -22,18 +26,9 @@ import {
 import problems, { LANGUAGES } from "../data/problems.jsx";
 import useCountdown from "../hooks/useCountdown.js";
 import { buildWatermarkBackground } from "../utils/watermark.js";
+import { formatCountdown, countdownUrgency } from "../utils/formatCountdown.js";
 
 const TOTAL_TEST_CASES = 15;
-
-function formatCountdown(totalSeconds) {
-  const clamped = Math.max(0, totalSeconds);
-  const h = Math.floor(clamped / 3600);
-  const m = Math.floor((clamped % 3600) / 60);
-  const s = clamped % 60;
-  const mm = String(m).padStart(h > 0 ? 2 : 1, "0");
-  const ss = String(s).padStart(2, "0");
-  return h > 0 ? `${h} hr ${mm} min ${ss} sec` : `${mm} min ${ss} sec`;
-}
 
 // The "Solve" screen: problem statement on the left, a real (if
 // non-executing) code editor on the right, split by draggable dividers
@@ -55,6 +50,7 @@ export default function SolvePage({
   savedCode,
   onCodeChange,
   candidateEmail,
+  companyLogo,
 }) {
   const problem = problems[questionId];
   // Tiled diagonal watermark stamped behind the problem description — only
@@ -185,9 +181,16 @@ export default function SolvePage({
   return (
     <div className="solve-page">
       <div className="dashboard-topbar">
-        <div className="dashboard-timer">
-          <ClockIcon />
-          {formatCountdown(secondsLeft)}
+        <div className="dashboard-topbar-left">
+          {companyLogo && (
+            <div className="dashboard-logo">
+              <img src={companyLogo} alt="" />
+            </div>
+          )}
+          <div className={`dashboard-timer dashboard-timer--${countdownUrgency(secondsLeft)}`}>
+            <ClockIcon />
+            {formatCountdown(secondsLeft)}
+          </div>
         </div>
 
         <div className="dashboard-actions">
@@ -211,10 +214,7 @@ export default function SolvePage({
       <div className="solve-body">
         <div className="solve-rail">
           <div className="solve-rail-toggle">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="4" width="18" height="16" rx="2" />
-              <line x1="9" y1="4" x2="9" y2="20" />
-            </svg>
+            <PanelToggleIcon />
           </div>
           {railGroups.map((group) => (
             <div className="solve-rail-group" key={group.label}>
@@ -238,13 +238,32 @@ export default function SolvePage({
           ))}
         </div>
 
+        {/* Second icon-only rail, parallel to the question-number one above —
+            notes icon pinned to the top, settings pinned to the bottom.
+            Purely decorative for now (no wired-up panel behind either), same
+            as the Test Results header's dock button elsewhere on this page. */}
+        <div className="solve-side-rail">
+          <button className="solve-side-rail-btn" aria-label="Notes">
+            <NotesIcon />
+          </button>
+          <button className="solve-side-rail-btn solve-side-rail-btn--bottom" aria-label="Settings">
+            <SettingsIcon />
+          </button>
+        </div>
+
         {!expanded && (
           <div
             className="solve-panel solve-panel--problem"
             style={{
               width: `${leftWidth}%`,
-              backgroundImage: watermarkBackground,
-              backgroundRepeat: "repeat",
+              // A CSS custom property (not a direct backgroundImage here)
+              // so it cascades down and every nested box with its own
+              // solid background (Sample Case, the STDIN/FUNCTION table,
+              // Sample Output) can redraw the same watermark over itself
+              // via `background-image: var(--watermark-bg, none)` — see
+              // index.css — instead of the pattern being fully hidden
+              // wherever a child covers it with an opaque surface color.
+              "--watermark-bg": watermarkBackground,
             }}
           >
             <div className="solve-problem-header">
@@ -373,20 +392,46 @@ export default function SolvePage({
 
               {resultsOpen && (
                 <div className="solve-results-body">
+                  {/* Tabs and the status banner are frozen — they never scroll
+                      away; only the dynamic content below them
+                      (.solve-results-content) does. */}
                   <div className="solve-results-tabs">
                     <button className="solve-results-tab solve-results-tab--active">All Cases</button>
                     <button className="solve-results-tab">Custom</button>
                   </div>
 
-                  {runStatus === "idle" && (
-                    <p className="muted-text solve-results-placeholder">Click on "Run" to run the test cases.</p>
+                  {runStatus === "running" && (
+                    <div className="test-status-banner test-status-banner--running">
+                      <SpinnerIcon /> Started
+                    </div>
                   )}
 
-                  {runStatus === "running" && (
-                    <>
-                      <div className="test-status-banner test-status-banner--running">
-                        <SpinnerIcon /> Started
-                      </div>
+                  {runStatus === "done" &&
+                    (() => {
+                      const passedCount = caseResults.filter(Boolean).length;
+                      const allPassed = passedCount === TOTAL_TEST_CASES;
+                      return (
+                        <div
+                          className={`test-status-banner ${
+                            allPassed ? "test-status-banner--passed" : "test-status-banner--failed"
+                          }`}
+                        >
+                          <span
+                            className={allPassed ? "test-status-banner-icon" : "test-status-banner-icon--failed"}
+                          >
+                            {allPassed ? <CheckIcon /> : <XIcon />}
+                          </span>
+                          {passedCount}/{TOTAL_TEST_CASES} test cases passed successfully
+                        </div>
+                      );
+                    })()}
+
+                  <div className="solve-results-content">
+                    {runStatus === "idle" && (
+                      <p className="muted-text solve-results-placeholder">Click on "Run" to run the test cases.</p>
+                    )}
+
+                    {runStatus === "running" && (
                       <div className="test-case-grid">
                         {Array.from({ length: TOTAL_TEST_CASES }).map((_, i) => {
                           const locked = i >= unlockedCount;
@@ -403,30 +448,9 @@ export default function SolvePage({
                           );
                         })}
                       </div>
-                    </>
-                  )}
+                    )}
 
-                  {runStatus === "done" && (
-                    <>
-                      {(() => {
-                        const passedCount = caseResults.filter(Boolean).length;
-                        const allPassed = passedCount === TOTAL_TEST_CASES;
-                        return (
-                          <div
-                            className={`test-status-banner ${
-                              allPassed ? "test-status-banner--passed" : "test-status-banner--failed"
-                            }`}
-                          >
-                            <span
-                              className={allPassed ? "test-status-banner-icon" : "test-status-banner-icon--failed"}
-                            >
-                              {allPassed ? <CheckCircleIcon /> : <XCircleIcon />}
-                            </span>
-                            {passedCount}/{TOTAL_TEST_CASES} test cases passed successfully
-                          </div>
-                        );
-                      })()}
-
+                    {runStatus === "done" && (
                       <div className="test-results-columns">
                         <div className="test-case-list">
                           {Array.from({ length: TOTAL_TEST_CASES }).map((_, i) => {
@@ -445,7 +469,7 @@ export default function SolvePage({
                                     casePassed ? "test-case-row-status--passed" : "test-case-row-status--failed"
                                   }
                                 >
-                                  {casePassed ? <CheckCircleIcon /> : <XCircleIcon />}
+                                  {casePassed ? <CheckIcon /> : <XIcon />}
                                 </span>
                                 Test Case {i + 1}
                                 {locked && (
@@ -459,24 +483,28 @@ export default function SolvePage({
                         </div>
 
                         <div className="test-case-detail">
-                          {selectedCase >= unlockedCount ? (
-                            <p className="muted-text">
-                              This is a hidden test case — its input and expected output aren't shown to
-                              candidates, only whether it passed.
+                          <div className="test-detail-box">
+                            <span className="test-detail-box-title">Compiler Message</span>
+                            <div className="test-detail-box-divider" />
+                            <p className="test-detail-compiler">
+                              {caseResults[selectedCase] ? "Success" : "Wrong Answer"}
                             </p>
+                          </div>
+
+                          {selectedCase >= unlockedCount ? (
+                            <div className="hidden-test-case-box">
+                              <div className="hidden-test-case-heading">
+                                <LockIcon />
+                                <span>Hidden Test Case</span>
+                              </div>
+                              <p className="hidden-test-case-desc">
+                                Hidden test cases help evaluate whether your code handles different scenarios
+                                correctly. You can use print or log statements to debug and understand their
+                                behavior.
+                              </p>
+                            </div>
                           ) : (
                             <>
-                              <div className="test-detail-section">
-                                <span className="field-label">Compiler Message</span>
-                                <p
-                                  className={`test-detail-compiler ${
-                                    caseResults[selectedCase] ? "success-text" : "error-text"
-                                  }`}
-                                >
-                                  {caseResults[selectedCase] ? "Success" : "Wrong Answer"}
-                                </p>
-                              </div>
-
                               <div className="test-detail-section">
                                 <div className="test-detail-heading">
                                   <span className="field-label">Input (stdin)</span>
@@ -528,8 +556,8 @@ export default function SolvePage({
                           )}
                         </div>
                       </div>
-                    </>
-                  )}
+                    )}
+                  </div>
                 </div>
               )}
             </div>

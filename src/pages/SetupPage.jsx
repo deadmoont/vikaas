@@ -17,6 +17,7 @@ const blankFields = () => ({
   startTime: "19:00",
   timezoneLabel: "IST(+05:30)",
   candidateEmail: defaultConfig.candidateEmail,
+  companyLogo: defaultConfig.companyLogo,
   sections: defaultConfig.sections.map((s) => ({ name: s.name, questions: s.questions })),
 });
 
@@ -29,6 +30,17 @@ export default function SetupPage({ initialFields, onComplete }) {
   const [fields, setFields] = useState(() => initialFields ?? blankFields());
 
   const set = (key, value) => setFields((prev) => ({ ...prev, [key]: value }));
+
+  // Read in-memory only (a data URL held in React state) — never uploaded
+  // anywhere, matching this app's no-backend/no-persistence approach.
+  const handleLogoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => set("companyLogo", reader.result);
+    reader.readAsDataURL(file);
+    e.target.value = ""; // allow re-selecting the same file later
+  };
 
   const endTime = useMemo(
     () => addMinutesToTime(fields.startTime, Number(fields.durationMinutes) || 0),
@@ -176,10 +188,36 @@ export default function SetupPage({ initialFields, onComplete }) {
               onChange={(e) => set("candidateEmail", e.target.value)}
             />
           </div>
+
+          <div>
+            <label className="field-label" htmlFor="companyLogo">
+              Company Logo
+            </label>
+            <div className="logo-upload-row">
+              {fields.companyLogo && <img className="logo-upload-preview" src={fields.companyLogo} alt="" />}
+              <input
+                id="companyLogo"
+                className="text-input"
+                type="file"
+                accept="image/*"
+                onChange={handleLogoUpload}
+              />
+              {fields.companyLogo && (
+                <button
+                  type="button"
+                  className="logo-upload-remove"
+                  onClick={() => set("companyLogo", null)}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
         </div>
         <p className="muted-text">
-          Stamped as a repeating watermark across the problem description on the Solve page —
-          matches how proctored platforms discourage screenshotting questions.
+          Candidate email is stamped as a repeating watermark across the problem description on
+          the Solve page. Uploading a logo shows it next to the countdown timer on the Test
+          Dashboard and Solve pages — leave it blank to show just the timer, as now.
         </p>
 
         <label className="field-label">

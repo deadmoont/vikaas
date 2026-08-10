@@ -8,8 +8,17 @@ import { addMinutesToTime, formatDisplayDateTime } from "./datetime.js";
  * from the static defaults in config/testConfig.js.
  */
 export function buildConfigFromSetup(fields) {
-  const { companyName, testLabel, durationMinutes, testDate, startTime, timezoneLabel, candidateEmail, sections } =
-    fields;
+  const {
+    companyName,
+    testLabel,
+    durationMinutes,
+    testDate,
+    startTime,
+    timezoneLabel,
+    candidateEmail,
+    companyLogo,
+    sections,
+  } = fields;
   const endTime = addMinutesToTime(startTime, Number(durationMinutes) || 0);
 
   return {
@@ -22,6 +31,7 @@ export function buildConfigFromSetup(fields) {
       timezone: timezoneLabel,
     },
     candidateEmail: candidateEmail?.trim() ? candidateEmail.trim() : defaultConfig.candidateEmail,
+    companyLogo: companyLogo ?? null,
     sections: sections.map((s) => ({ name: s.name.trim(), questions: Number(s.questions) })),
   };
 }

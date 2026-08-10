@@ -26,6 +26,11 @@ const testConfig = {
   // proctored assessment platforms). Settable on the Setup page.
   candidateEmail: "iit2023131@iiita.ac.in",
 
+  // Optional — a data URL (uploaded on the Setup page, in-memory only, never
+  // persisted). null by default: no logo box renders next to the countdown
+  // timer on the Test Dashboard / Solve pages unless one is actually set.
+  companyLogo: null,
+
   // ---- Timing / login window -------------------------------------------
   durationMinutes: 90,
   loginWindow: {

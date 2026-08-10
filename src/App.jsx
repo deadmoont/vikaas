@@ -187,6 +187,7 @@ export default function App() {
           savedCode={codeByQuestion[activeQuestionId]}
           onCodeChange={(code) => updateQuestionCode(activeQuestionId, code)}
           candidateEmail={config.candidateEmail}
+          companyLogo={config.companyLogo}
         />
       </div>
     );
