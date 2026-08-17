@@ -5,6 +5,10 @@
   "type": "module",
   "description": "Frontend-only, fully customizable clone of a HackerRank-style test onboarding flow (Instructions -> Candidate Details -> Integrity & Permissions). No backend required.",
   "scripts": {
+    "setup-host": "node scripts/setup-host.js",
+    "setup-https": "node scripts/setup-https.js",
+    "start": "powershell -ExecutionPolicy Bypass -File scripts/start.ps1",
+    "stop": "powershell -ExecutionPolicy Bypass -File scripts/stop.ps1",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"

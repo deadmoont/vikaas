@@ -77,12 +77,21 @@ vikaas/
 # 1. Install dependencies
 npm install
 
-# 2. Start the dev server
-npm run dev
+# 2. Windows: one command does everything (elevation prompt, hosts entry, dev server)
+npm start
+npm run stop       # whenever you want to stop it again
+
+# macOS/Linux: no self-elevating launcher yet, so it's two steps —
+sudo npm run setup-host   # one-time
+sudo npm run dev          # every time (binding port 80 needs root; Ctrl+C to stop)
 ```
 
-This opens the app at **http://localhost:5173**. Camera and fullscreen permissions work
-fine on `localhost` without HTTPS (browsers treat localhost as a secure context).
+This opens the app at **http://hakarrrank.com/** (a made-up local dev hostname — not a
+real, owned domain, just a name that happens to end in `.com` — see below) instead of the
+default `http://localhost:5173`. Camera and fullscreen permissions still work fine, since
+`hakarrrank.com` resolves to `127.0.0.1`, which browsers treat as a secure context the same
+as `localhost`. Run `npm run setup-https` once (see below) to upgrade that to a real
+`https://` padlock with no "Not secure" warning.
 
 Other commands:
 
@@ -90,6 +99,67 @@ Other commands:
 npm run build     # production build -> dist/
 npm run preview   # locally preview the production build
 ```
+
+### Local domain setup
+
+`vite.config.js` runs the dev server on **port 80** (HTTP's default, so the browser omits
+it from the address bar — `http://hakarrrank.com/` instead of `http://hakarrrank.com:5173/`)
+and only answers to the `hakarrrank.com` hostname (`allowedHosts`, since Vite 5 rejects
+unrecognized `Host` headers by default as a DNS-rebinding safeguard). Both require an
+elevated terminal/process, since binding port 80 and editing the hosts file both need
+admin/root.
+
+- **`npm start` (Windows only)** — [`scripts/start.ps1`](scripts/start.ps1). If the current
+  shell isn't already elevated, it relaunches itself as Administrator (one UAC prompt) and
+  that elevated window closes itself automatically once it's done — you don't keep it open.
+  It clears out any stray leftover Node process still squatting on port 80 from a previous
+  run, runs `setup-host`, then starts the dev server as a **fully detached background
+  process** (launched directly via `node .../vite/bin/vite.js` with a hidden window, output
+  redirected to `dev-server.log`/`dev-server.err.log`, PID tracked in `.dev-server.pid` —
+  none of these are committed, see `.gitignore`). Detached means exactly what it sounds
+  like: it is **not** a child of the terminal that launched it, so closing that terminal (or
+  any other window) does **not** stop the site — that was the whole point of switching away
+  from the earlier version, which kept the server running as a foreground child of the
+  elevated PowerShell window and died the moment you closed it.
+- **`npm run stop`** — [`scripts/stop.ps1`](scripts/stop.ps1) reads `.dev-server.pid` and
+  stops that process (self-elevates the same way `start.ps1` does, since stopping a process
+  an elevated session started generally needs elevation too). Also self-heals: if port 80 is
+  still held by *something* even without a matching PID file, it stops that too.
+- **`npm run setup-host`** — [`scripts/setup-host.js`](scripts/setup-host.js) adds
+  `127.0.0.1  hakarrrank.com` to your OS hosts file (`C:\Windows\System32\drivers\etc\hosts`
+  on Windows, `/etc/hosts` on macOS/Linux). Safe to re-run — it skips the write if the
+  entry's already there. Only affects your own machine.
+- **"Port 80 is already in use"** — usually a leftover `vite`/`node` process from an earlier
+  run that didn't get stopped via `npm run stop` (`npm start` clears this automatically on
+  its next run too); otherwise it's a real conflict with IIS/Skype/another local server,
+  which you'd need to stop separately (Task Manager, or `Get-NetTCPConnection -LocalPort 80`
+  in an elevated PowerShell to see what's holding it).
+
+### HTTPS (no "Not secure" warning)
+
+Plain `http://` always shows "Not secure" in the address bar — there's no way around that
+short of real TLS. `npm run setup-https` sets that up locally via
+[mkcert](https://github.com/FiloSottile/mkcert): a tool that generates its own local
+Certificate Authority, installs it into your OS/browser trust stores (so it's trusted the
+same way a real CA is — this is the standard, widely-used way to get a genuine padlock on
+`localhost`-style dev domains, not a workaround), and then issues a cert for `hakarrrank.com`
+signed by that CA.
+
+```bash
+choco install mkcert -y   # one-time, from an Administrator terminal (Windows)
+npm run setup-https       # generates certs/hakarrrank.com.pem + certs/hakarrrank.com-key.pem
+```
+
+Once those two files exist, `vite.config.js` picks them up automatically on the next
+`npm start`/`npm run dev` — no further config changes — and switches from port 80 to port
+443 (HTTPS's default, also omitted from the address bar) and from `http://` to `https://`.
+Neither file is committed (see `.gitignore`): they're machine-specific, generated locally,
+and only trusted because *your* machine's mkcert CA installation says so.
+
+Want plain `localhost:5173` back instead? Just remove the `open`/`port`/`strictPort`/`host`/
+`allowedHosts` overrides in `vite.config.js`'s `server` block, or comment them out — `npm
+run dev` then works unprivileged again in the foreground, no `npm start`/`setup-host`/
+`stop` needed (plain Ctrl+C stops it, same as any normal dev server).
 
 ## Using the Setup page
 

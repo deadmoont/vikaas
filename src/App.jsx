@@ -16,6 +16,7 @@ import useCamera from "./hooks/useCamera.js";
 import useFullscreen from "./hooks/useFullscreen.js";
 import { isDetailsFormValid } from "./utils/validators.js";
 import { buildConfigFromSetup } from "./utils/buildConfigFromSetup.js";
+import { randomId, randomToken } from "./utils/randomId.js";
 
 const STEPS = ["instructions", "details", "permissions"];
 
@@ -111,6 +112,22 @@ export default function App() {
   useEffect(() => {
     scrollRef.current?.scrollTo(0, 0);
   }, [stepIndex]);
+
+  // Cosmetic only: gives each page its own random-looking, longer path +
+  // query (e.g. /test-v2/8f3k9d2m1q1/dashboard?s=<64 random chars>) instead
+  // of a bare "/", purely as address-bar flavor. The "?s=" value is random
+  // noise, not base64 of any real-looking payload — deliberately not shaped
+  // like a decodable credentials blob. Uses the History API directly rather
+  // than a routing library, per this app's existing "no routing" design
+  // (see STEPS above) — it never drives what renders; stage/stepIndex state
+  // stays the only source of truth, this just mirrors it into the URL.
+  // Skips the transient "loading" stage so the URL doesn't flicker during
+  // the ~1.4s transition screens.
+  useEffect(() => {
+    if (stage === "loading") return;
+    const pageName = stage === "onboarding" ? STEPS[stepIndex] : stage === "testDashboard" ? "dashboard" : stage;
+    window.history.pushState(null, "", `/test-v2/${randomId()}/${pageName}?s=${randomToken()}`);
+  }, [stage, stepIndex]);
 
   const markQuestionSubmitted = (id) =>
     setSubmittedQuestions((prev) => {
