@@ -3,15 +3,17 @@ import Chevron from "../components/Chevron.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import Modal from "../components/Modal.jsx";
 import { HelpCircleIcon, ClockIcon, BookmarkIcon } from "../components/icons.jsx";
-import problems from "../data/problems.jsx";
 import useCountdown from "../hooks/useCountdown.js";
 import { formatCountdown, countdownUrgency } from "../utils/formatCountdown.js";
+import { getProblemForQuestion } from "../utils/getProblemForQuestion.js";
 
 // Shown after identity verification — lists the sections/questions exactly
-// as configured on the Setup page. Only the first 3 questions (global
-// numbering across sections) have real content behind "Solve" — see
-// data/problems.jsx — anything beyond that shows an inline demo note
-// instead, since there's no backend to serve arbitrary question content.
+// as configured on the Setup page. Only 3 problems are hardcoded (see
+// data/problems.jsx — this is a frontend demo with no backend to serve
+// arbitrary question content), but every question row still gets a real
+// "Solve" behind it: getProblemForQuestion cycles that fixed set round-robin
+// across however many questions the sections add up to, so nothing here is
+// ever a dead end.
 export default function TestDashboardPage({
   config,
   theme,
@@ -31,14 +33,8 @@ export default function TestDashboardPage({
     confirmSubmitYesLabel,
     companyLogo,
   } = config;
-  const [demoNote, setDemoNote] = useState(false);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
   const secondsLeft = useCountdown(testStartTime, durationMinutes);
-
-  const showDemoNote = () => {
-    setDemoNote(true);
-    setTimeout(() => setDemoNote(false), 3000);
-  };
 
   let questionCounter = 0;
 
@@ -83,12 +79,6 @@ export default function TestDashboardPage({
         <div className="dashboard-content">
           <h1 className="dashboard-title">{testTitle}</h1>
 
-          {demoNote && (
-            <p className="inline-note dashboard-note">
-              This is a demo — only the first 3 questions have real content behind "Solve".
-            </p>
-          )}
-
           <div className="dashboard-sections">
             {sections.map((section) => (
               <div className="collapsible dashboard-section" key={section.name}>
@@ -108,7 +98,7 @@ export default function TestDashboardPage({
                     {Array.from({ length: section.questions }).map(() => {
                       questionCounter += 1;
                       const n = questionCounter;
-                      const problem = problems[n];
+                      const problem = getProblemForQuestion(n);
                       return (
                         <tr key={n}>
                           <td>
@@ -118,15 +108,12 @@ export default function TestDashboardPage({
                                 row divider line had a gap under this column. */}
                             <span className="dashboard-question-cell">
                               <BookmarkIcon />
-                              {n}. {problem ? problem.title : `Question ${n}`}
+                              {n}. {problem.title}
                             </span>
                           </td>
                           <td>Coding</td>
                           <td>
-                            <button
-                              className="btn btn-primary dashboard-solve-btn"
-                              onClick={() => (problem ? onSolve(n) : showDemoNote())}
-                            >
+                            <button className="btn btn-primary dashboard-solve-btn" onClick={() => onSolve(n)}>
                               {submittedQuestions.has(n) ? "Modify" : "Solve"}
                             </button>
                           </td>

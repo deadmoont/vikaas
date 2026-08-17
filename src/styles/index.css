@@ -1293,10 +1293,6 @@ body {
   margin: 0 0 20px;
 }
 
-.dashboard-note {
-  margin-bottom: 16px;
-}
-
 .dashboard-sections {
   display: flex;
   flex-direction: column;

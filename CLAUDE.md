@@ -45,11 +45,19 @@ completion screen:
    submit my test" button calls the `onSubmit` prop, which moves `App.jsx` to the
    `"feedback"` stage.
 3. **`SolvePage`** — a real problem-statement + code-editor split screen, reached via
-   "Solve"/"Modify". **Only questionIds 1/2/3 (global numbering across sections) have real
-   content** — `src/data/problems.jsx` hardcodes exactly 3 problems (Easy/Medium/Hard:
-   Bit Profit, Global Maximum, Autocorrect Prototype), matched by that global number.
-   Anything beyond question 3 falls back to `TestDashboardPage`'s inline demo note instead
-   of opening `SolvePage`. `CodeEditor.jsx` has real (if lightweight) syntax coloring —
+   "Solve"/"Modify". **Only 3 problems are hardcoded** — `src/data/problems.jsx` has exactly
+   3 (Easy/Medium/Hard: Bit Profit, Global Maximum, Autocorrect Prototype), keyed 1/2/3. But
+   every question slot the Setup page's sections add up to still gets real content:
+   `utils/getProblemForQuestion.js` cycles that fixed set **round-robin** by global question
+   number (`(questionId - 1) % 3`), so e.g. with 5 total questions, question 4 reuses
+   problem 1's statement/starter code/sample cases and question 5 reuses problem 2's —
+   nothing is ever blank or a dead end. Both `TestDashboardPage` (building each section's
+   row) and `SolvePage` (loading the active question) call the same helper, so they always
+   agree on which problem a given question number maps to. Reused questions still get their
+   *own* independent code/submission state — `codeByQuestion`/`submittedQuestions` in
+   `App.jsx` are keyed by questionId, not by which problem it happens to reuse — only the
+   problem content itself is shared. `CodeEditor.jsx` has real (if lightweight) syntax
+   coloring —
    `utils/highlightCpp.jsx` is a regex tokenizer, not a real parser, rendered as a colored
    `<pre>` stacked exactly under a transparent-text `<textarea>` (the classic
    textarea-over-highlight-overlay technique); still not a dependency like

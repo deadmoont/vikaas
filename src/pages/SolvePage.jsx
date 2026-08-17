@@ -23,19 +23,23 @@ import {
   DownloadIcon,
   DockIcon,
 } from "../components/icons.jsx";
-import problems, { LANGUAGES } from "../data/problems.jsx";
+import { LANGUAGES } from "../data/problems.jsx";
 import useCountdown from "../hooks/useCountdown.js";
 import { buildWatermarkBackground } from "../utils/watermark.js";
 import { formatCountdown, countdownUrgency } from "../utils/formatCountdown.js";
+import { getProblemForQuestion } from "../utils/getProblemForQuestion.js";
 
 const TOTAL_TEST_CASES = 15;
 
 // The "Solve" screen: problem statement on the left, a real (if
 // non-executing) code editor on the right, split by draggable dividers
 // (horizontal between the two panels, vertical between the editor and Test
-// Results). Reached from TestDashboardPage; only questionIds 1/2/3 have
-// real content (this is a frontend demo — there's no backend to serve
-// arbitrary questions or actually judge submitted code).
+// Results). Reached from TestDashboardPage. Only 3 problems are hardcoded
+// (this is a frontend demo — there's no backend to serve arbitrary
+// questions or actually judge submitted code), but every question slot
+// still gets real content: getProblemForQuestion cycles the fixed set
+// round-robin across however many questions the Setup page's sections add
+// up to, rather than leaving anything past question 3 blank.
 export default function SolvePage({
   questionId,
   sections,
@@ -52,7 +56,7 @@ export default function SolvePage({
   candidateEmail,
   companyLogo,
 }) {
-  const problem = problems[questionId];
+  const problem = getProblemForQuestion(questionId);
   // Tiled diagonal watermark stamped behind the problem description — only
   // ever recomputed if the email actually changes, not on every render.
   const watermarkBackground = useMemo(() => buildWatermarkBackground(candidateEmail), [candidateEmail]);
@@ -160,13 +164,16 @@ export default function SolvePage({
     onBack();
   };
 
+  // Defensive only — getProblemForQuestion always returns one of the 3
+  // hardcoded problems (round-robin) for any questionId >= 1, so this
+  // shouldn't actually be reachable in normal use.
   if (!problem) {
     return (
       <div className="dashboard-page">
         <div className="dashboard-body">
           <div className="dashboard-content">
             <h1 className="dashboard-title">Question not available</h1>
-            <p className="muted-text">This is a frontend demo with content for only 3 questions.</p>
+            <p className="muted-text">Something went wrong loading this question's content.</p>
             <button className="btn btn-primary" onClick={onBack}>
               Back to dashboard
             </button>
