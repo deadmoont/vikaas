@@ -311,7 +311,7 @@ export default function SolvePage({
               <button
                 className="icon-help-btn"
                 aria-label="Language info"
-                title="Only C/C++ starter code is provided in this demo — other languages keep the same template."
+                title="Only C/C++ starter code is provided — other languages keep the same template."
               >
                 <InfoIcon />
               </button>

@@ -21,7 +21,7 @@ are wired up for real using native browser APIs.
 - **Fully customizable text** — everything not covered by the Setup page (instructions
   copy, integrity guidelines, permission descriptions, form labels, etc.) still comes from
   one file: [`src/config/testConfig.js`](src/config/testConfig.js), which also supplies the
-  *defaults* the Setup page's fields start out pre-filled with.
+  _defaults_ the Setup page's fields start out pre-filled with.
 - **Working webcam access** via `navigator.mediaDevices.getUserMedia` — shows a live
   preview once granted, handles denial gracefully.
 - **Working fullscreen mode** via the Fullscreen API — tracks real state, including the
@@ -88,7 +88,7 @@ sudo npm run setup-host    # one-time
 sudo npm run dev           # every time (binding port 80/443 needs root; Ctrl+C to stop)
 ```
 
-This opens the app at **https://hakarrrank.com/** (a made-up local dev hostname — not a
+This opens the app at **https://hackerrrank.com/** (a made-up local dev hostname — not a
 real, owned domain, just a name that happens to end in `.com` — see below) instead of the
 default `http://localhost:5173`, with a genuine trusted padlock (see "HTTPS" below) rather
 than a "Not secure" warning — which also matters for more than looks: camera access
@@ -105,8 +105,8 @@ npm run preview   # locally preview the production build
 ### Local domain setup
 
 `vite.config.js` runs the dev server on **port 80** (HTTP's default, so the browser omits
-it from the address bar — `http://hakarrrank.com/` instead of `http://hakarrrank.com:5173/`)
-and only answers to the `hakarrrank.com` hostname (`allowedHosts`, since Vite 5 rejects
+it from the address bar — `http://hackerrrank.com/` instead of `http://hackerrrank.com:5173/`)
+and only answers to the `hackerrrank.com` hostname (`allowedHosts`, since Vite 5 rejects
 unrecognized `Host` headers by default as a DNS-rebinding safeguard). Both require an
 elevated terminal/process, since binding port 80 and editing the hosts file both need
 admin/root.
@@ -128,9 +128,9 @@ admin/root.
 - **`npm run stop`** — [`scripts/stop.ps1`](scripts/stop.ps1) reads `.dev-server.pid` and
   stops that process (self-elevates the same way `start.ps1` does, since stopping a process
   an elevated session started generally needs elevation too). Also self-heals: if port 80 is
-  still held by *something* even without a matching PID file, it stops that too.
+  still held by _something_ even without a matching PID file, it stops that too.
 - **`npm run setup-host`** — [`scripts/setup-host.js`](scripts/setup-host.js) adds
-  `127.0.0.1  hakarrrank.com` to your OS hosts file (`C:\Windows\System32\drivers\etc\hosts`
+  `127.0.0.1  hackerrrank.com` to your OS hosts file (`C:\Windows\System32\drivers\etc\hosts`
   on Windows, `/etc/hosts` on macOS/Linux). Safe to re-run — it skips the write if the
   entry's already there. Only affects your own machine.
 - **"Port 80 is already in use"** — usually a leftover `vite`/`node` process from an earlier
@@ -147,13 +147,13 @@ sets that up locally via [mkcert](https://github.com/FiloSottile/mkcert): a tool
 generates its own local Certificate Authority, installs it into your OS/browser trust stores
 (so it's trusted the same way a real CA is — this is the standard, widely-used way to get a
 genuine padlock on `localhost`-style dev domains, not a workaround), and then issues a cert
-for `hakarrrank.com` signed by that CA. `npm start` calls this automatically, including
+for `hackerrrank.com` signed by that CA. `npm start` calls this automatically, including
 **bootstrapping Chocolatey itself** (via its official installer script) if that's missing
 too, then mkcert via Chocolatey — so a completely fresh Windows machine with neither tool
 still ends up fully set up from that one command. Manually, it's:
 
 ```bash
-npm run setup-https   # generates certs/hakarrrank.com.pem + certs/hakarrrank.com-key.pem
+npm run setup-https   # generates certs/hackerrrank.com.pem + certs/hackerrrank.com-key.pem
                        # (installs Chocolatey/mkcert first if either is missing)
 ```
 
@@ -161,7 +161,7 @@ Once those two files exist, `vite.config.js` picks them up automatically on the 
 `npm start`/`npm run dev` — no further config changes — and switches from port 80 to port
 443 (HTTPS's default, also omitted from the address bar) and from `http://` to `https://`.
 Neither file is committed (see `.gitignore`): they're machine-specific, generated locally,
-and only trusted because *your* machine's mkcert CA installation says so — **committing them
+and only trusted because _your_ machine's mkcert CA installation says so — **committing them
 wouldn't help a clone of this repo either**, since what makes a cert trusted is the CA
 installed in a given machine's own trust store, not the cert file itself; each machine needs
 its own `mkcert -install` regardless (which `npm start`/`setup-https` handles automatically).

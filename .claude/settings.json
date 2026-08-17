@@ -6,7 +6,7 @@
       "Bash(ffmpeg -y -i loader.mp4 -vf \"crop=4:4:400:400\" -vframes 1 -f rawvideo -pix_fmt rgb24 /tmp/pix.raw)",
       "Bash(xxd /tmp/pix.raw)",
       "Bash(vercel --version)",
-      "PowerShell(Get-Content \"$env:SystemRoot\\\\System32\\\\drivers\\\\etc\\\\hosts\" | Select-String \"hakarrrank\")",
+      "PowerShell(Get-Content \"$env:SystemRoot\\\\System32\\\\drivers\\\\etc\\\\hosts\" | Select-String \"hackerrrank\")",
       "Bash(node scripts/setup-host.js)",
       "PowerShell(Get-NetTCPConnection -LocalPort 80 -ErrorAction SilentlyContinue | Select-Object LocalAddress,LocalPort,State,OwningProcess | ForEach-Object { $_; Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue | Select-Object Id,ProcessName,Path })",
       "PowerShell(Get-Process -Id 18136 -ErrorAction SilentlyContinue)",

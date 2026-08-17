@@ -1,8 +1,8 @@
 // One-time (per machine) local HTTPS setup via mkcert — installs a locally
 // trusted CA (so the browser shows a real padlock, not a self-signed-cert
-// warning) and issues a cert for hakarrrank.com, saved to certs/. Once
+// warning) and issues a cert for hackerrrank.com, saved to certs/. Once
 // those files exist, vite.config.js picks them up automatically and
-// switches from http://hakarrrank.com/ to https://hakarrrank.com/ with no
+// switches from http://hackerrrank.com/ to https://hackerrrank.com/ with no
 // further config changes needed.
 //
 // Fully self-installing on Windows: bootstraps Chocolatey itself (via its
@@ -20,8 +20,8 @@ import { existsSync, mkdirSync } from "node:fs";
 import { platform } from "node:os";
 
 const CERT_DIR = "certs";
-const CERT_FILE = `${CERT_DIR}/hakarrrank.com.pem`;
-const KEY_FILE = `${CERT_DIR}/hakarrrank.com-key.pem`;
+const CERT_FILE = `${CERT_DIR}/hackerrrank.com.pem`;
+const KEY_FILE = `${CERT_DIR}/hackerrrank.com-key.pem`;
 
 function run(cmd) {
   console.log(`> ${cmd}`);
@@ -30,7 +30,9 @@ function run(cmd) {
 
 function commandExists(cmd) {
   try {
-    execSync(platform() === "win32" ? `where ${cmd}` : `which ${cmd}`, { stdio: "ignore" });
+    execSync(platform() === "win32" ? `where ${cmd}` : `which ${cmd}`, {
+      stdio: "ignore",
+    });
     return true;
   } catch {
     return false;
@@ -45,25 +47,31 @@ function ensureMkcert() {
 
   if (platform() === "win32") {
     if (!commandExists("choco")) {
-      console.log("Chocolatey isn't installed either — bootstrapping it first (official installer script)...");
+      console.log(
+        "Chocolatey isn't installed either — bootstrapping it first (official installer script)...",
+      );
       run(
         'powershell -NoProfile -ExecutionPolicy Bypass -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; ' +
           "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; " +
-          "iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))\""
+          "iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))\"",
       );
     }
     console.log("Installing mkcert via Chocolatey...");
     run("choco install mkcert -y");
   } else if (platform() === "darwin") {
     if (!commandExists("brew")) {
-      console.error("Homebrew isn't installed — install it first: https://brew.sh");
+      console.error(
+        "Homebrew isn't installed — install it first: https://brew.sh",
+      );
       return false;
     }
     console.log("Installing mkcert via Homebrew...");
     run("brew install mkcert");
   } else {
     console.error("Auto-install isn't wired up for this OS.");
-    console.error("Install instructions: https://github.com/FiloSottile/mkcert#installation");
+    console.error(
+      "Install instructions: https://github.com/FiloSottile/mkcert#installation",
+    );
     return false;
   }
 
@@ -71,14 +79,18 @@ function ensureMkcert() {
 }
 
 if (existsSync(CERT_FILE) && existsSync(KEY_FILE)) {
-  console.log(`Certs already exist in ${CERT_DIR}/ — nothing to do. Delete that folder to regenerate.`);
+  console.log(
+    `Certs already exist in ${CERT_DIR}/ — nothing to do. Delete that folder to regenerate.`,
+  );
   process.exit(0);
 }
 
 try {
   if (!ensureMkcert()) {
     console.error("");
-    console.error("Couldn't get mkcert installed automatically — see the errors above.");
+    console.error(
+      "Couldn't get mkcert installed automatically — see the errors above.",
+    );
     process.exit(1);
   }
 
@@ -88,13 +100,19 @@ try {
   // stores — this is what makes the browser show a real padlock instead of
   // "Not secure", since the cert generated below is signed by that CA.
   run("mkcert -install");
-  run(`mkcert -cert-file "${CERT_FILE}" -key-file "${KEY_FILE}" hakarrrank.com`);
+  run(
+    `mkcert -cert-file "${CERT_FILE}" -key-file "${KEY_FILE}" hackerrrank.com`,
+  );
 } catch (err) {
   console.error("");
   console.error(`Setup failed: ${err.message}`);
-  console.error("This needs an elevated terminal (Administrator on Windows, sudo elsewhere) — re-run from one.");
+  console.error(
+    "This needs an elevated terminal (Administrator on Windows, sudo elsewhere) — re-run from one.",
+  );
   process.exit(1);
 }
 
 console.log("");
-console.log("Done — vite.config.js will now serve https://hakarrrank.com/ automatically.");
+console.log(
+  "Done — vite.config.js will now serve https://hackerrrank.com/ automatically.",
+);

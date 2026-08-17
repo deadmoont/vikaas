@@ -23,7 +23,6 @@ export default function FeedbackPage({ config }) {
   const [feedbackText, setFeedbackText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [demoNote, setDemoNote] = useState(false);
 
   const handleSubmit = () => {
     setIsSubmitting(true);
@@ -40,11 +39,6 @@ export default function FeedbackPage({ config }) {
       document.exitFullscreen().catch(() => {});
     }
   }, [submitted]);
-
-  const showDemoNote = () => {
-    setDemoNote(true);
-    setTimeout(() => setDemoNote(false), 3000);
-  };
 
   return (
     <div className="feedback-page">
@@ -95,12 +89,7 @@ export default function FeedbackPage({ config }) {
           <>
             <h1 className="feedback-title">{feedbackThanksTitle}</h1>
             <p className="muted-text feedback-message">{feedbackThanksMessage}</p>
-            <button className="btn btn-primary feedback-mock-btn" onClick={showDemoNote}>
-              {mockInterviewLabel}
-            </button>
-            {demoNote && (
-              <p className="inline-note">This is a demo — no mock-interview flow is wired up.</p>
-            )}
+            <button className="btn btn-primary feedback-mock-btn">{mockInterviewLabel}</button>
           </>
         )}
       </div>

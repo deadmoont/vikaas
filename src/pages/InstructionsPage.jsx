@@ -6,7 +6,6 @@ import Chevron from "../components/Chevron.jsx";
 export default function InstructionsPage({ config }) {
   const { instructions, sampleTestNote, sections } = config;
   const [sectionsOpen, setSectionsOpen] = useState(true);
-  const [sampleNotice, setSampleNotice] = useState(false);
 
   return (
     <div className="panel-content">
@@ -32,19 +31,8 @@ export default function InstructionsPage({ config }) {
 
       <div className="sample-card">
         <span>{sampleTestNote}</span>
-        <button
-          className="btn btn-secondary"
-          onClick={() => {
-            setSampleNotice(true);
-            setTimeout(() => setSampleNotice(false), 3000);
-          }}
-        >
-          Sample Test
-        </button>
+        <button className="btn btn-secondary">Sample Test</button>
       </div>
-      {sampleNotice && (
-        <p className="inline-note">This is a demo build — the sample test isn't wired up to anything.</p>
-      )}
 
       <h2 className="panel-subheading">Test Format</h2>
       <div className="collapsible">

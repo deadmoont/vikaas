@@ -1,9 +1,9 @@
 # One-command setup + launch: elevates itself (one UAC prompt) if needed,
-# makes sure the hakarrrank.com hosts entry exists, makes sure a locally
+# makes sure the hackerrrank.com hosts entry exists, makes sure a locally
 # trusted HTTPS cert exists (installing Chocolatey and/or mkcert first if
 # either is missing - see setup-https.js), then starts the dev server as a
 # fully DETACHED background process (not attached to any console window -
-# see the note below) so it opens at https://hakarrrank.com with no port in
+# see the note below) so it opens at https://hackerrrank.com with no port in
 # the URL and keeps running even if every terminal window you have open
 # gets closed. Stop it again with `npm run stop`.
 #
@@ -87,8 +87,8 @@ $proc = Start-Process node -ArgumentList "`"$vitePath`"" -WindowStyle Hidden `
 $proc.Id | Out-File $pidFile -Encoding ascii -NoNewline
 
 Start-Sleep -Seconds 2
-$hasCerts = (Test-Path "certs\hakarrrank.com.pem") -and (Test-Path "certs\hakarrrank.com-key.pem")
-$siteUrl = if ($hasCerts) { "https://hakarrrank.com/" } else { "http://hakarrrank.com/ (run 'npm run setup-https' for https with no browser warning)" }
+$hasCerts = (Test-Path "certs\hackerrrank.com.pem") -and (Test-Path "certs\hackerrrank.com-key.pem")
+$siteUrl = if ($hasCerts) { "https://hackerrrank.com/" } else { "http://hackerrrank.com/ (run 'npm run setup-https' for https with no browser warning)" }
 Write-Host ""
 Write-Host "Dev server running in the background (PID $($proc.Id))." -ForegroundColor Green
 Write-Host "  Site:  $siteUrl"
