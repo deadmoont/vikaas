@@ -77,21 +77,23 @@ vikaas/
 # 1. Install dependencies
 npm install
 
-# 2. Windows: one command does everything (elevation prompt, hosts entry, dev server)
+# 2. Windows: one command does everything — hosts entry, Chocolatey + mkcert
+#    install if needed, HTTPS cert generation, dev server. Nothing else to run.
 npm start
 npm run stop       # whenever you want to stop it again
 
-# macOS/Linux: no self-elevating launcher yet, so it's two steps —
-sudo npm run setup-host   # one-time
-sudo npm run dev          # every time (binding port 80 needs root; Ctrl+C to stop)
+# macOS/Linux: no self-elevating launcher yet, so it's a few steps —
+sudo npm run setup-https   # one-time (needs Homebrew already installed)
+sudo npm run setup-host    # one-time
+sudo npm run dev           # every time (binding port 80/443 needs root; Ctrl+C to stop)
 ```
 
-This opens the app at **http://hakarrrank.com/** (a made-up local dev hostname — not a
+This opens the app at **https://hakarrrank.com/** (a made-up local dev hostname — not a
 real, owned domain, just a name that happens to end in `.com` — see below) instead of the
-default `http://localhost:5173`. Camera and fullscreen permissions still work fine, since
-`hakarrrank.com` resolves to `127.0.0.1`, which browsers treat as a secure context the same
-as `localhost`. Run `npm run setup-https` once (see below) to upgrade that to a real
-`https://` padlock with no "Not secure" warning.
+default `http://localhost:5173`, with a genuine trusted padlock (see "HTTPS" below) rather
+than a "Not secure" warning — which also matters for more than looks: camera access
+(needed on the Permissions step) only works on secure origins, and a custom hostname on
+plain HTTP doesn't count as one even though it resolves to `127.0.0.1`.
 
 Other commands:
 
@@ -112,15 +114,17 @@ admin/root.
 - **`npm start` (Windows only)** — [`scripts/start.ps1`](scripts/start.ps1). If the current
   shell isn't already elevated, it relaunches itself as Administrator (one UAC prompt) and
   that elevated window closes itself automatically once it's done — you don't keep it open.
-  It clears out any stray leftover Node process still squatting on port 80 from a previous
-  run, runs `setup-host`, then starts the dev server as a **fully detached background
-  process** (launched directly via `node .../vite/bin/vite.js` with a hidden window, output
-  redirected to `dev-server.log`/`dev-server.err.log`, PID tracked in `.dev-server.pid` —
-  none of these are committed, see `.gitignore`). Detached means exactly what it sounds
-  like: it is **not** a child of the terminal that launched it, so closing that terminal (or
-  any other window) does **not** stop the site — that was the whole point of switching away
-  from the earlier version, which kept the server running as a foreground child of the
-  elevated PowerShell window and died the moment you closed it.
+  It clears out any stray leftover Node process still squatting on port 80/443 from a
+  previous run, runs `setup-host`, runs `setup-https` (which installs Chocolatey and/or
+  mkcert first if either is missing — see below — so this is genuinely the only command a
+  fresh clone needs), then starts the dev server as a **fully detached background process**
+  (launched directly via `node .../vite/bin/vite.js` with a hidden window, output redirected
+  to `dev-server.log`/`dev-server.err.log`, PID tracked in `.dev-server.pid` — none of these
+  are committed, see `.gitignore`). Detached means exactly what it sounds like: it is **not**
+  a child of the terminal that launched it, so closing that terminal (or any other window)
+  does **not** stop the site — that was the whole point of switching away from the earlier
+  version, which kept the server running as a foreground child of the elevated PowerShell
+  window and died the moment you closed it.
 - **`npm run stop`** — [`scripts/stop.ps1`](scripts/stop.ps1) reads `.dev-server.pid` and
   stops that process (self-elevates the same way `start.ps1` does, since stopping a process
   an elevated session started generally needs elevation too). Also self-heals: if port 80 is
@@ -138,23 +142,31 @@ admin/root.
 ### HTTPS (no "Not secure" warning)
 
 Plain `http://` always shows "Not secure" in the address bar — there's no way around that
-short of real TLS. `npm run setup-https` sets that up locally via
-[mkcert](https://github.com/FiloSottile/mkcert): a tool that generates its own local
-Certificate Authority, installs it into your OS/browser trust stores (so it's trusted the
-same way a real CA is — this is the standard, widely-used way to get a genuine padlock on
-`localhost`-style dev domains, not a workaround), and then issues a cert for `hakarrrank.com`
-signed by that CA.
+short of real TLS. `npm run setup-https` ([`scripts/setup-https.js`](scripts/setup-https.js))
+sets that up locally via [mkcert](https://github.com/FiloSottile/mkcert): a tool that
+generates its own local Certificate Authority, installs it into your OS/browser trust stores
+(so it's trusted the same way a real CA is — this is the standard, widely-used way to get a
+genuine padlock on `localhost`-style dev domains, not a workaround), and then issues a cert
+for `hakarrrank.com` signed by that CA. `npm start` calls this automatically, including
+**bootstrapping Chocolatey itself** (via its official installer script) if that's missing
+too, then mkcert via Chocolatey — so a completely fresh Windows machine with neither tool
+still ends up fully set up from that one command. Manually, it's:
 
 ```bash
-choco install mkcert -y   # one-time, from an Administrator terminal (Windows)
-npm run setup-https       # generates certs/hakarrrank.com.pem + certs/hakarrrank.com-key.pem
+npm run setup-https   # generates certs/hakarrrank.com.pem + certs/hakarrrank.com-key.pem
+                       # (installs Chocolatey/mkcert first if either is missing)
 ```
 
 Once those two files exist, `vite.config.js` picks them up automatically on the next
 `npm start`/`npm run dev` — no further config changes — and switches from port 80 to port
 443 (HTTPS's default, also omitted from the address bar) and from `http://` to `https://`.
 Neither file is committed (see `.gitignore`): they're machine-specific, generated locally,
-and only trusted because *your* machine's mkcert CA installation says so.
+and only trusted because *your* machine's mkcert CA installation says so — **committing them
+wouldn't help a clone of this repo either**, since what makes a cert trusted is the CA
+installed in a given machine's own trust store, not the cert file itself; each machine needs
+its own `mkcert -install` regardless (which `npm start`/`setup-https` handles automatically).
+If `setup-https` can't complete (e.g. no internet on a first run), it's not fatal — `npm
+start` logs a warning and continues on plain `http://` for that run.
 
 Want plain `localhost:5173` back instead? Just remove the `open`/`port`/`strictPort`/`host`/
 `allowedHosts` overrides in `vite.config.js`'s `server` block, or comment them out — `npm

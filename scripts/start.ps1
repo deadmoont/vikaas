@@ -1,10 +1,14 @@
 # One-command setup + launch: elevates itself (one UAC prompt) if needed,
-# makes sure the hakarrrank.com hosts entry exists, then starts the dev
-# server as a fully DETACHED background process (not attached to any
-# console window - see the note below) so it opens at hakarrrank.com with no
-# port in the URL - https:// if certs/ exists (see `npm run setup-https`),
-# http:// otherwise - and keeps running even if every terminal window you
-# have open gets closed. Stop it again with `npm run stop`.
+# makes sure the hakarrrank.com hosts entry exists, makes sure a locally
+# trusted HTTPS cert exists (installing Chocolatey and/or mkcert first if
+# either is missing - see setup-https.js), then starts the dev server as a
+# fully DETACHED background process (not attached to any console window -
+# see the note below) so it opens at https://hakarrrank.com with no port in
+# the URL and keeps running even if every terminal window you have open
+# gets closed. Stop it again with `npm run stop`.
+#
+# This is the ONE command anyone who clones this repo needs to run (after
+# `npm install`) - no separate choco/mkcert/setup-https steps.
 #
 # Usage:  npm start   (which runs: powershell -File scripts/start.ps1)
 #
@@ -60,6 +64,15 @@ $stale | Where-Object { $_.ProcessName -eq "node" } | Sort-Object Id -Unique | F
 }
 
 npm run setup-host
+
+# Installs Chocolatey + mkcert if either is missing, then generates the
+# cert (skips straight past all of that if certs/ already has one). Not
+# fatal if this fails (e.g. no internet on first run) - vite.config.js
+# falls back to plain http:// automatically, so the site still comes up.
+npm run setup-https
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "HTTPS setup didn't complete - continuing on plain http:// for now. Re-run 'npm start' once that's sorted." -ForegroundColor Yellow
+}
 
 # Launched via `node <vite's own entry file>` directly (not `npm run dev`,
 # which is an extra wrapper layer) and with -WindowStyle Hidden, so this is

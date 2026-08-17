@@ -28,7 +28,17 @@ export default function useCamera() {
 
     if (!navigator.mediaDevices?.getUserMedia) {
       setStatus("unsupported");
-      setError("This browser does not support camera access.");
+      // Browsers only expose getUserMedia on secure contexts — literal
+      // "localhost"/127.0.0.1, or real HTTPS. A custom hostname mapped to
+      // 127.0.0.1 via the hosts file (see README's "Local domain setup")
+      // does NOT count as secure on plain HTTP, even though it resolves to
+      // the loopback address — hence this being the likely cause here
+      // rather than an actually-unsupported browser.
+      setError(
+        window.isSecureContext
+          ? "This browser does not support camera access."
+          : "Camera access needs a secure connection. This page is being served over plain HTTP on a non-localhost hostname — either use https:// (see README's setup-https) or open it via localhost."
+      );
       return;
     }
 

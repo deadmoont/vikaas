@@ -50,10 +50,12 @@ export default function PermissionsPage({ config, camera, fullscreen }) {
     return () => clearTimeout(timer);
   }, [showFaceCheck, cameraGranted]);
 
-  // If the browser permission prompt gets denied while this is up, don't
-  // leave it hanging open forever.
+  // If camera access gets denied — or the browser won't even expose
+  // getUserMedia at all, which is what happens on an insecure (non-HTTPS,
+  // non-localhost) origin — don't leave this hanging open on "Checking..."
+  // forever with no way out but the close button.
   useEffect(() => {
-    if (camera.status === "denied") setShowFaceCheck(false);
+    if (camera.status === "denied" || camera.status === "unsupported") setShowFaceCheck(false);
   }, [camera.status]);
 
   // Auto-advance: webcam done -> open monitor; monitor done -> open
@@ -128,7 +130,9 @@ export default function PermissionsPage({ config, camera, fullscreen }) {
             {camera.status === "requesting" ? "Requesting..." : webcamPermission.grantLabel}
           </button>
 
-          {camera.status === "denied" && <p className="error-text">{camera.error}</p>}
+          {(camera.status === "denied" || camera.status === "unsupported") && (
+            <p className="error-text">{camera.error}</p>
+          )}
         </AccordionItem>
 
         <AccordionItem
